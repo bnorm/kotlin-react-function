@@ -65,7 +65,7 @@ publishing {
 
       pom {
         name.set(project.name)
-        description.set("TODO")
+        description.set("Kotlin Compiler plugin for React boilerplate")
         url.set("https://github.com/bnorm/kotlin-react-function")
 
         licenses {

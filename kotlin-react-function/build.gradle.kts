@@ -1,5 +1,6 @@
 plugins {
   kotlin("js")
+  id("org.jetbrains.dokka")
 
   signing
   `maven-publish`
@@ -7,9 +8,23 @@ plugins {
 
 kotlin {
   js(IR) {
+    moduleName = project.name
     browser()
-    nodejs()
   }
+}
+
+tasks.dokka {
+  outputFormat = "html"
+  outputDirectory = "$buildDir/javadoc"
+}
+
+tasks.register("dokkaJar", Jar::class) {
+  group = "documentation"
+  description = "Assembles Kotlin docs with Dokka"
+
+  archiveClassifier.set("javadoc")
+  from(tasks.dokka)
+  dependsOn(tasks.dokka)
 }
 
 signing {
@@ -18,11 +33,36 @@ signing {
 }
 
 publishing {
-//  publications {
-//    create<MavenPublication>("default") {
-//      from(components["kotlin"])
-//    }
-//  }
+  publications {
+    create<MavenPublication>("default") {
+      from(components["kotlin"])
+      artifact(tasks["kotlinSourcesJar"])
+      artifact(tasks["dokkaJar"])
+
+      pom {
+        name.set(project.name)
+        description.set("Kotlin Compiler plugin for React boilerplate")
+        url.set("https://github.com/bnorm/kotlin-react-function")
+
+        licenses {
+          license {
+            name.set("Apache License 2.0")
+            url.set("https://github.com/bnorm/kotlin-react-function/blob/master/LICENSE.txt")
+          }
+        }
+        scm {
+          url.set("https://github.com/bnorm/kotlin-react-function")
+          connection.set("scm:git:git://github.com/bnorm/kotlin-react-function.git")
+        }
+        developers {
+          developer {
+            name.set("Brian Norman")
+            url.set("https://github.com/bnorm")
+          }
+        }
+      }
+    }
+  }
 
   repositories {
     if (

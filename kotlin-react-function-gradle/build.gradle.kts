@@ -23,7 +23,7 @@ gradlePlugin {
     create("kotlinReactFunction") {
       id = "com.bnorm.react.kotlin-react-function"
       displayName = "Kotlin React Function Plugin"
-      description = "TODO"
+      description = "Kotlin Compiler plugin for React boilerplate"
       implementationClass = "com.bnorm.react.ReactFunctionGradlePlugin"
     }
   }
@@ -31,8 +31,4 @@ gradlePlugin {
 
 tasks.withType<KotlinCompile> {
   kotlinOptions.jvmTarget = "1.8"
-}
-
-tasks.register("publish") {
-  dependsOn("publishPlugins")
 }

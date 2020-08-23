@@ -20,17 +20,17 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 
 class ReactFunctionGradlePlugin : KotlinCompilerPluginSupportPlugin {
-  override fun apply(target: Project): Unit = with(target) {
-    extensions.create("kotlinReactFunction", ReactFunctionGradleExtension::class.java)
-  }
+  override fun apply(target: Project) = Unit
 
   override fun getCompilerPluginId(): String = "com.bnorm.kotlin-react-function"
 
-  override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean = true
+  override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean =
+    kotlinCompilation.platformType == KotlinPlatformType.js
 
   override fun getPluginArtifact(): SubpluginArtifact = SubpluginArtifact(
     groupId = "com.bnorm.react",
@@ -40,12 +40,6 @@ class ReactFunctionGradlePlugin : KotlinCompilerPluginSupportPlugin {
 
   override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {
     val project = kotlinCompilation.target.project
-//    val extension = project.extensions.getByType(ReactFunctionGradleExtension::class.java)
-//    return project.provider {
-//      extension.functions.map {
-//        SubpluginOption(key = "function", value = it)
-//      }
-//    }
     return project.provider { emptyList() }
   }
 }
