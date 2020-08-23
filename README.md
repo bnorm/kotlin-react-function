@@ -29,7 +29,7 @@ Now consider the following, free of boilerplate:
 
 ```kotlin
 fun RBuilder.Hello(name: String) {
-  +"Hello, ${props.name}"
+  +"Hello, $name"
 }
 ```
 
@@ -42,7 +42,7 @@ adding an annotation! (and Gradle dependency stuff)
 ```kotlin
 @RFunction
 fun RBuilder.Hello(name: String) {
-  +"Hello, ${props.name}"
+  +"Hello, $name"
 }
 ```
 
