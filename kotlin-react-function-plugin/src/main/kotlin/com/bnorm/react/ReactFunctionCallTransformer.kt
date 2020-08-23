@@ -19,6 +19,7 @@ package com.bnorm.react
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.ir.setDeclarationsParent
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irExprBody
 import org.jetbrains.kotlin.ir.builders.irGet
-import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.name
+import org.jetbrains.kotlin.ir.declarations.impl.IrBodyBase
 import org.jetbrains.kotlin.ir.declarations.path
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
@@ -48,17 +48,14 @@ import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.symbols.FqNameEqualityChecker
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.getClass
-import org.jetbrains.kotlin.ir.types.impl.buildSimpleType
-import org.jetbrains.kotlin.ir.types.impl.toBuilder
-import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
@@ -88,9 +85,7 @@ class ReactFunctionCallTransformer(
   private val typeRProps = symbolRProps.createType(false, emptyList())
 
   private val symbolRClass = context.referenceClass(FqName("react.RClass"))!!
-  private val typeRClass = symbolRClass.createType(false, listOf(typeRProps.toBuilder().apply {
-    this.classifier
-  }.buildSimpleType()))
+  private val typeRClass = symbolRClass.createType(false, listOf(typeRProps as IrTypeArgument))
 
   private val symbolReactElement = context.referenceClass(FqName("react.ReactElement"))!!
   private val typeReactElement = symbolReactElement.createType(false, emptyList())
@@ -102,12 +97,12 @@ class ReactFunctionCallTransformer(
 
   private val symbolRFunctionBuilder = context.referenceFunctions(FqName("react.rFunction")).single() // TODO proper filter
 
-   private val symbolInvokeFunction = context.referenceFunctions(FqName("react.RBuilder.invoke")).single {
-     val left = (it.owner.extensionReceiverParameter?.type as? IrSimpleType)?.classifier ?: return@single false
-     FqNameEqualityChecker.areEqual(left, typeRClass.classifier)
-   } // TODO proper filter
+  private val symbolInvokeFunction = context.referenceFunctions(FqName("react.RBuilder.invoke")).single {
+    val left = (it.owner.extensionReceiverParameter?.type as? IrSimpleType)?.classifier ?: return@single false
+    FqNameEqualityChecker.areEqual(left, typeRClass.classifier)
+  } // TODO proper filter
 
-   private val symbolAttrsProperty = context.referenceProperties(FqName("react.RElementBuilder.attrs")).single()
+  private val symbolAttrsProperty = context.referenceProperties(FqName("react.RElementBuilder.attrs")).single()
 
 
   private lateinit var file: IrFile
@@ -121,14 +116,10 @@ class ReactFunctionCallTransformer(
 
     irFile.transformChildrenVoid()
     irFile.declarations.addAll(newDeclarations.filter { it.parent == irFile })
-
-    if (irFile.name == "main.kt") {
-      println(irFile.dump())
-    }
   }
 
   override fun visitSimpleFunction(declaration: IrSimpleFunction): IrStatement {
-    if (declaration.annotations.any { it.type.getClass()?.fqNameWhenAvailable == FqName("test.RFunction") }) {
+    if (declaration.annotations.any { it.type.getClass()?.fqNameWhenAvailable == FqName("com.bnorm.react.RFunction") }) {
       transformFunction(declaration)
     }
     return super.visitSimpleFunction(declaration)
@@ -151,13 +142,13 @@ class ReactFunctionCallTransformer(
   }
 
   private fun IrGeneratorContext.buildPropsInterface(declaration: IrSimpleFunction): IrClass {
-    val irClass = buildInterface(
+    val irClass = buildExternalInterface(
       name = "${declaration.name}FuncProps",
-//      visibility = Visibilities.PRIVATE,
-      superTypes = listOf(irBuiltIns.anyType)
+      visibility = Visibilities.PRIVATE,
+      superTypes = listOf(typeRProps)
     )
     for (valueParameter in declaration.valueParameters) {
-      addAbstractVarProperty(
+      addExternalVarProperty(
         container = irClass,
         name = valueParameter.name,
         type = valueParameter.type
@@ -175,7 +166,7 @@ class ReactFunctionCallTransformer(
         val rBuilder = function.extensionReceiverParameter!!
         val props = function.valueParameters[0]
         for (statement in body.statements) {
-          +statement.deepCopyWithSymbols().transform(object : IrElementTransformerVoid() {
+          val copy = statement.transform(object : IrElementTransformerVoid() {
             override fun visitGetValue(expression: IrGetValue): IrExpression {
 
               /**
@@ -195,7 +186,7 @@ class ReactFunctionCallTransformer(
                       dispatchReceiver = irGet(props)
                     }
                   }
-                } else if (owner.name == Name.special("<this>")) {
+                } else if (owner.name == Name.special("<this>") && owner.parent == (body as IrBodyBase<*>).container) {
                   return context.irBuilder(expression.symbol).run {
                     irGet(rBuilder)
                   }
@@ -205,6 +196,8 @@ class ReactFunctionCallTransformer(
               return super.visitGetValue(expression)
             }
           }, null)
+          copy.setDeclarationsParent(function)
+          +copy
         }
       })
     }
@@ -222,12 +215,21 @@ CALL 'public final fun rFunction <P> (displayName: kotlin.String, render: @[Exte
       VALUE_PARAMETER name:props index:0 type:test.ExpectedHomeProps
       BLOCK_BODY
      */
-    val fieldType = symbolRClass.createType(false, listOf(propsType as IrTypeArgument))
-    return irCall(symbolRFunctionBuilder, fieldType).apply {
+
+    val rClassType = symbolRClass.createType(false, arguments = listOf(propsType as IrTypeArgument))
+
+    // TODO type=@[ExtensionFunctionType]?
+    val lambdaType = this@ReactFunctionCallTransformer.context.irBuiltIns.function(2)
+      .createType(false, listOf(
+        typeRBuilder as IrTypeArgument,
+        propsType as IrTypeArgument,
+        this@ReactFunctionCallTransformer.context.irBuiltIns.unitType as IrTypeArgument
+      ))
+
+    return irCall(symbolRFunctionBuilder, rClassType).apply {
       putTypeArgument(0, propsType)
       putValueArgument(0, irString(name))
-
-      putValueArgument(1, buildLambda(context.irBuiltIns.unitType, symbolRFunctionBuilder.owner.valueParameters[1]!!.type) {
+      putValueArgument(1, buildLambda(context.irBuiltIns.unitType, lambdaType) {
         val function = this
         // TODO currently = $receiver: VALUE_PARAMETER name:$receiver type:test.RBuilder
         addExtensionReceiver { type = typeRBuilder }
@@ -260,7 +262,8 @@ BLOCK_BODY
               .single { it.name == valueParameter.name }
 
             +irCall(property.setter!!, origin = IrStatementOrigin.EQ).apply {
-              this.dispatchReceiver = irCall(symbolAttrsProperty.owner.getter!!, origin = IrStatementOrigin.GET_PROPERTY).apply {
+              val callee = symbolAttrsProperty.owner.getter!!
+              this.dispatchReceiver = IrCallImpl(startOffset, endOffset, propsClass.defaultType, callee.symbol, callee.typeParameters.size, callee.valueParameters.size, IrStatementOrigin.GET_PROPERTY).apply {
                 this.dispatchReceiver = irGet(rElementBuilder)
               }
               this.putValueArgument(0, irGet(valueParameter))
@@ -283,14 +286,22 @@ CALL 'public final fun invoke <P> (handler: @[ExtensionFunctionType] kotlin.Func
       $receiver: VALUE_PARAMETER name:<this> type:test.RElementBuilder<test.ExpectedHomeProps>
       BLOCK_BODY
      */
+
+    // TODO type=@[ExtensionFunctionType]?
+    val typeRElementBuilder = symbolRElementBuilder.createType(false, listOf(propsType as IrTypeArgument))
+    val lambdaType = this@ReactFunctionCallTransformer.context.irBuiltIns.function(1)
+      .createType(false, listOf(
+        typeRElementBuilder as IrTypeArgument,
+        this@ReactFunctionCallTransformer.context.irBuiltIns.unitType as IrTypeArgument
+      ))
+
     return irCall(symbolInvokeFunction, typeReactElement).apply {
       putTypeArgument(0, propsType)
       this.dispatchReceiver = dispatchReceiver
       this.extensionReceiver = extensionReceiver
-      // TODO current = handler: FUN_EXPR type=@[ExtensionFunctionType] kotlin.Function1<react.RElementBuilder<P of react.RBuilder.invoke>, kotlin.Unit>{ react.RHandler<P of react.RBuilder.invoke> } origin=LAMBDA
-      putValueArgument(0, buildLambda(context.irBuiltIns.unitType, symbolInvokeFunction.owner.valueParameters[0]!!.type) {
+      putValueArgument(0, buildLambda(context.irBuiltIns.unitType, lambdaType) {
         val function = this
-        addExtensionReceiver { this.type = symbolRElementBuilder.createType(false, listOf(propsType as IrTypeArgument)) }
+        addExtensionReceiver { this.type = typeRElementBuilder }
         this.body = context.irBuilder(symbol).irBlockBody { body(function) }
       })
     }

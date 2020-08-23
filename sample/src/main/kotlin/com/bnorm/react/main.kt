@@ -1,9 +1,11 @@
+@file:Suppress("FunctionName")
+
 package com.bnorm.react
 
-import react.dom.render
 import kotlinx.browser.document
+import kotlinx.html.js.onClickFunction
 import react.*
-import test.RFunction
+import react.dom.*
 
 fun main() {
   document.getElementById("root")?.let {
@@ -13,28 +15,38 @@ fun main() {
   }
 }
 
-@Suppress("FunctionName")
 @RFunction
 fun RBuilder.App() {
-  +"Hello, World"
+  Counter(initialCount = 10)
 }
 
-//@Suppress("FunctionName")
-//@RFunction
-//fun RBuilder.Home(name: String) {
-//  +"Hello, $name"
-//}
+@RFunction
+fun RBuilder.Counter(
+  initialCount: Int = 0,
+  increaseText: String = "Increase",
+  decreaseText: String = "Decrease",
+  clearText: String = "Clear"
+) {
+  var count by useState(initialCount)
 
+  div {
+    div {
+      +"Count: $count"
+    }
 
-//@Suppress("FunctionName")
-//fun RBuilder.App() {
-//  APP_RFUNC.invoke {
-//  }
-//}
-//
-//interface AppFuncProps : RProps
-//
-//val APP_RFUNC = rFunction<AppFuncProps>("App") { props ->
-//  +"Hello, World"
-//}
+    button {
+      +increaseText
+      attrs.onClickFunction = { count++ }
+    }
 
+    button {
+      +decreaseText
+      attrs.onClickFunction = { count-- }
+    }
+
+    button {
+      +clearText
+      attrs.onClickFunction = { count = 0 }
+    }
+  }
+}

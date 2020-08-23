@@ -41,7 +41,7 @@ fun IrGeneratorContext.irBuilder(
   endOffset: Int = UNDEFINED_OFFSET
 ) = DeclarationIrBuilder(this, symbol, startOffset, endOffset)
 
-fun IrGeneratorContext.buildInterface(
+fun IrGeneratorContext.buildExternalInterface(
   name: String,
   visibility: Visibility = Visibilities.PUBLIC,
   superTypes: List<IrType>? = listOf(irBuiltIns.anyType)
@@ -50,6 +50,7 @@ fun IrGeneratorContext.buildInterface(
     this.visibility = visibility
     kind = ClassKind.INTERFACE
     modality = Modality.ABSTRACT
+    isExternal = true
     this.name = Name.identifier(name)
   }
   superTypes?.let { irClass.superTypes = it }
@@ -57,7 +58,7 @@ fun IrGeneratorContext.buildInterface(
   return irClass
 }
 
-fun IrGeneratorContext.addAbstractVarProperty(
+fun IrGeneratorContext.addExternalVarProperty(
   container: IrClass,
   name: Name,
   type: IrType
@@ -76,11 +77,13 @@ PROPERTY name:name visibility:public modality:ABSTRACT [var]
   val irProperty = container.addProperty {
     this.name = name
     modality = Modality.ABSTRACT
+    isExternal = true
     isVar = true
   }
 
   val irGetter = irProperty.addGetter {
     modality = Modality.ABSTRACT
+    isExternal = true
     returnType = type
     origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
   }
@@ -89,6 +92,7 @@ PROPERTY name:name visibility:public modality:ABSTRACT [var]
 
   val irSetter = irProperty.addSetter {
     modality = Modality.ABSTRACT
+    isExternal = true
     returnType = irBuiltIns.unitType
     origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
   }
@@ -124,13 +128,13 @@ fun IrGeneratorContext.buildStaticProperty(parent: IrDeclarationParent, fieldTyp
  */
   val irProperty = buildProperty {
     this.name = Name.identifier(name)
-//    visibility = Visibilities.PRIVATE
+    visibility = Visibilities.PRIVATE
     modality = Modality.FINAL
   }
   irProperty.parent = parent
 
   val irGetter = irProperty.addGetter {
-//    visibility = Visibilities.PRIVATE
+    visibility = Visibilities.PRIVATE
     modality = Modality.FINAL
     returnType = fieldType
     origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
@@ -138,13 +142,14 @@ fun IrGeneratorContext.buildStaticProperty(parent: IrDeclarationParent, fieldTyp
   irGetter.correspondingPropertySymbol = irProperty.symbol
 
   val field = buildField {
-//    visibility = Visibilities.PRIVATE
+    visibility = Visibilities.PRIVATE
     isStatic = true
     isFinal = true
     this.name = Name.identifier(name)
     type = fieldType
     origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
   }
+  field.correspondingPropertySymbol = irProperty.symbol
   field.parent = parent
   field.initializer = irBuilder(field.symbol).run { initializer() }
 
