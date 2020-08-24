@@ -56,12 +56,10 @@ This library is a work in progress and requires using Kotlin/JS IR backend for
 compilation. This compiler feature is currently in preview and is not ready for
 production. Use at your own risk!
 
-See the `sample` directory for a working example project using this compiler
+See the [sample][sample] directory for a working example project using this compiler
 plugin!
 
 ## Gradle Plugin
-
-__*COMING SOON!*__
 
 Builds of the Gradle plugin are available through the
 [Gradle Plugin Portal][kotlin-react-function-gradle].
@@ -89,4 +87,5 @@ kotlin {
 }
 ```
 
+[sample]: https://github.com/bnorm/kotlin-react-function/blob/master/sample
 [kotlin-react-function-gradle]: https://plugins.gradle.org/plugin/com.bnorm.react.kotlin-react-function
