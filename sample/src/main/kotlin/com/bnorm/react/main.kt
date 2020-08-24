@@ -9,44 +9,19 @@ import react.dom.*
 
 fun main() {
   document.getElementById("root")?.let {
-    render(it) {
-      App()
-    }
+    render(it) { Counter(initialCount = 10) }
   }
-}
-
-@RFunction
-fun RBuilder.App() {
-  Counter(initialCount = 10)
 }
 
 @RFunction
 fun RBuilder.Counter(
   initialCount: Int = 0,
-  increaseText: String = "Increase",
-  decreaseText: String = "Decrease",
-  clearText: String = "Clear"
+  increaseText: String = "Increase"
 ) {
   var count by useState(initialCount)
-
-  div {
-    div {
-      +"Count: $count"
-    }
-
-    button {
-      +increaseText
-      attrs.onClickFunction = { count++ }
-    }
-
-    button {
-      +decreaseText
-      attrs.onClickFunction = { count-- }
-    }
-
-    button {
-      +clearText
-      attrs.onClickFunction = { count = 0 }
-    }
+  div { +"Count: $count" }
+  button {
+    +increaseText
+    attrs.onClickFunction = { count++ }
   }
 }

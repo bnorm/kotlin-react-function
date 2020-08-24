@@ -54,9 +54,7 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
-import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
@@ -81,6 +79,9 @@ fun FileLoweringPass.runOnFileInOrder(irFile: IrFile) {
 class ReactFunctionCallTransformer(
   private val context: IrPluginContext
 ) : IrElementTransformerVoidWithContext(), FileLoweringPass {
+  private val symbolRFunction = context.referenceClass(FqName("com.bnorm.react.RFunction"))!!
+  private val typeRFunction = symbolRFunction.createType(false, emptyList())
+
   private val symbolRProps = context.referenceClass(FqName("react.RProps"))!!
   private val typeRProps = symbolRProps.createType(false, emptyList())
 
@@ -98,9 +99,10 @@ class ReactFunctionCallTransformer(
   private val symbolRFunctionBuilder = context.referenceFunctions(FqName("react.rFunction")).single() // TODO proper filter
 
   private val symbolInvokeFunction = context.referenceFunctions(FqName("react.RBuilder.invoke")).single {
+    // TODO proper filter
     val left = (it.owner.extensionReceiverParameter?.type as? IrSimpleType)?.classifier ?: return@single false
     FqNameEqualityChecker.areEqual(left, typeRClass.classifier)
-  } // TODO proper filter
+  }
 
   private val symbolAttrsProperty = context.referenceProperties(FqName("react.RElementBuilder.attrs")).single()
 
@@ -119,10 +121,17 @@ class ReactFunctionCallTransformer(
   }
 
   override fun visitSimpleFunction(declaration: IrSimpleFunction): IrStatement {
-    if (declaration.annotations.any { it.type.getClass()?.fqNameWhenAvailable == FqName("com.bnorm.react.RFunction") }) {
+    if (shouldTransform(declaration)) {
       transformFunction(declaration)
     }
     return super.visitSimpleFunction(declaration)
+  }
+
+  private fun shouldTransform(declaration: IrSimpleFunction): Boolean {
+    return declaration.extensionReceiverParameter?.type == typeRBuilder &&
+      declaration.returnType == context.irBuiltIns.unitType &&
+      declaration.parent is IrFile &&
+      declaration.annotations.any { it.type == typeRFunction }
   }
 
   private fun transformFunction(declaration: IrSimpleFunction) {
