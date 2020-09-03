@@ -18,6 +18,8 @@ package com.bnorm.react
 
 import com.google.auto.service.AutoService
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.com.intellij.mock.MockProject
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -28,7 +30,8 @@ class ReactFunctionComponentRegistrar : ComponentRegistrar {
     project: MockProject,
     configuration: CompilerConfiguration
   ) {
-    IrGenerationExtension.registerExtension(project, ReactFunctionIrGenerationExtension())
+    val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
+    IrGenerationExtension.registerExtension(project, ReactFunctionIrGenerationExtension(messageCollector))
   }
 }
 

@@ -1,15 +1,9 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
-buildscript {
-  dependencies {
-    classpath("gradle.plugin.com.bnorm.react:kotlin-react-function-gradle:0.1.0")
-  }
-}
-
 plugins {
   kotlin("js") version "1.4.0"
+  id("com.bnorm.react.kotlin-react-function") version "0.1.0"
 }
-apply(plugin = "com.bnorm.react.kotlin-react-function")
 
 repositories {
   mavenCentral()
@@ -37,9 +31,6 @@ kotlin {
 dependencies {
   implementation(kotlin("stdlib-js"))
   implementation("com.bnorm.react:kotlin-react-function:0.1.0")
-
-  implementation("org.jetbrains:kotlin-extensions:1.0.1-pre.112-kotlin-1.4.0")
-  implementation("org.jetbrains:kotlin-react:16.13.1-pre.112-kotlin-1.4.0")
   implementation("org.jetbrains:kotlin-react-dom:16.13.1-pre.112-kotlin-1.4.0")
 }
 

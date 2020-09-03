@@ -20,6 +20,9 @@ import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.setDeclarationsParent
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
@@ -49,17 +52,15 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
-import org.jetbrains.kotlin.ir.symbols.FqNameEqualityChecker
-import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import java.io.File
 
@@ -77,35 +78,11 @@ fun FileLoweringPass.runOnFileInOrder(irFile: IrFile) {
 }
 
 class ReactFunctionCallTransformer(
-  private val context: IrPluginContext
+  private val context: IrPluginContext,
+  private val messageCollector: MessageCollector,
 ) : IrElementTransformerVoidWithContext(), FileLoweringPass {
-  private val symbolRFunction = context.referenceClass(FqName("com.bnorm.react.RFunction"))!!
-  private val typeRFunction = symbolRFunction.createType(false, emptyList())
-
-  private val symbolRProps = context.referenceClass(FqName("react.RProps"))!!
-  private val typeRProps = symbolRProps.createType(false, emptyList())
-
-  private val symbolRClass = context.referenceClass(FqName("react.RClass"))!!
-  private val typeRClass = symbolRClass.createType(false, listOf(typeRProps as IrTypeArgument))
-
-  private val symbolReactElement = context.referenceClass(FqName("react.ReactElement"))!!
-  private val typeReactElement = symbolReactElement.createType(false, emptyList())
-
-  private val symbolRBuilder = context.referenceClass(FqName("react.RBuilder"))!!
-  private val typeRBuilder = symbolRBuilder.createType(false, emptyList())
-
-  private val symbolRElementBuilder = context.referenceClass(FqName("react.RElementBuilder"))!!
-
-  private val symbolRFunctionBuilder = context.referenceFunctions(FqName("react.rFunction")).single() // TODO proper filter
-
-  private val symbolInvokeFunction = context.referenceFunctions(FqName("react.RBuilder.invoke")).single {
-    // TODO proper filter
-    val left = (it.owner.extensionReceiverParameter?.type as? IrSimpleType)?.classifier ?: return@single false
-    FqNameEqualityChecker.areEqual(left, typeRClass.classifier)
-  }
-
-  private val symbolAttrsProperty = context.referenceProperties(FqName("react.RElementBuilder.attrs")).single()
-
+  private val classes = KnownClassTypes(context)
+  private val functions = KnownFunctionSymbols(context, classes)
 
   private lateinit var file: IrFile
   private lateinit var fileSource: String
@@ -116,28 +93,48 @@ class ReactFunctionCallTransformer(
     file = irFile
     fileSource = File(irFile.path).readText()
 
+    println(file.dump())
     irFile.transformChildrenVoid()
     irFile.declarations.addAll(newDeclarations.filter { it.parent == irFile })
   }
 
   override fun visitSimpleFunction(declaration: IrSimpleFunction): IrStatement {
-    if (shouldTransform(declaration)) {
+    if (validateSignature(declaration)) {
       transformFunction(declaration)
     }
     return super.visitSimpleFunction(declaration)
   }
 
-  private fun shouldTransform(declaration: IrSimpleFunction): Boolean {
-    return declaration.extensionReceiverParameter?.type == typeRBuilder &&
-      declaration.returnType == context.irBuiltIns.unitType &&
-      declaration.parent is IrFile &&
-      declaration.annotations.any { it.type == typeRFunction }
+  private fun validateSignature(declaration: IrSimpleFunction): Boolean {
+    if (declaration.annotations.none { it.type == classes.com_bnorm_react.RFunction }) return false
+
+    val location by lazy {
+      val line = fileSource.substring(declaration.startOffset).count { it == '\n' } + 1
+      println(line)
+      CompilerMessageLocation.create(file.path, line, -1, null)
+    }
+
+    var result = true
+    if (declaration.parent !is IrFile) {
+      messageCollector.report(CompilerMessageSeverity.ERROR, "RFunction annotated function must be a top-level function", location)
+      result = false
+    }
+
+    if (declaration.extensionReceiverParameter?.type != classes.react.RBuilder) {
+      messageCollector.report(CompilerMessageSeverity.ERROR, "RFunction annotated function must be an extension function of react.RBuilder", location)
+      result = false
+    }
+
+    if (declaration.returnType != context.irBuiltIns.unitType) {
+      messageCollector.report(CompilerMessageSeverity.ERROR, "RFunction annotated function must return Unit", location)
+      result = false
+    }
+
+    return result
   }
 
   private fun transformFunction(declaration: IrSimpleFunction) {
-    val body = declaration.body ?: return
-    body as? IrBlockBody ?: return
-
+    val body = (declaration.body as? IrBlockBody) ?: return
     val parent = declaration.parent as IrDeclarationContainer
 
     val props = context.buildPropsInterface(declaration)
@@ -154,7 +151,7 @@ class ReactFunctionCallTransformer(
     val irClass = buildExternalInterface(
       name = "${declaration.name}FuncProps",
       visibility = Visibilities.PRIVATE,
-      superTypes = listOf(typeRProps)
+      superTypes = listOf(classes.react.RProps)
     )
     for (valueParameter in declaration.valueParameters) {
       addExternalVarProperty(
@@ -167,7 +164,7 @@ class ReactFunctionCallTransformer(
   }
 
   private fun buildRFunctionProperty(parent: IrDeclarationParent, declaration: IrSimpleFunction, propsClass: IrClass, body: IrBlockBody): IrProperty {
-    val fieldType = symbolRClass.createType(false, listOf(propsClass.defaultType as IrTypeArgument))
+    val fieldType = classes.react.RClass(propsClass.defaultType)
     val name = "${declaration.name}_RFUNC".toUpperCase()
 
     return context.buildStaticProperty(parent, fieldType, name) {
@@ -175,10 +172,10 @@ class ReactFunctionCallTransformer(
         val rBuilder = function.extensionReceiverParameter!!
         val props = function.valueParameters[0]
         for (statement in body.statements) {
-          val copy = statement.transform(object : IrElementTransformerVoid() {
+          +statement.transform(object : IrElementTransformerVoid() {
             override fun visitGetValue(expression: IrGetValue): IrExpression {
 
-              /**
+              /*
                * Replace all IrGetValues of dispatch receiver and function
                * parameters with the correct calls relative to rFunction
                * builder.
@@ -204,9 +201,7 @@ class ReactFunctionCallTransformer(
 
               return super.visitGetValue(expression)
             }
-          }, null)
-          copy.setDeclarationsParent(function)
-          +copy
+          }, null).setDeclarationsParent(function)
         }
       })
     }
@@ -225,23 +220,23 @@ CALL 'public final fun rFunction <P> (displayName: kotlin.String, render: @[Exte
       BLOCK_BODY
      */
 
-    val rClassType = symbolRClass.createType(false, arguments = listOf(propsType as IrTypeArgument))
+    val rClassType = classes.react.RClass(propsType)
 
     // TODO type=@[ExtensionFunctionType]?
-    val lambdaType = this@ReactFunctionCallTransformer.context.irBuiltIns.function(2)
+    val lambdaType = context.irBuiltIns.function(2)
       .createType(false, listOf(
-        typeRBuilder as IrTypeArgument,
+        classes.react.RBuilder as IrTypeArgument,
         propsType as IrTypeArgument,
-        this@ReactFunctionCallTransformer.context.irBuiltIns.unitType as IrTypeArgument
+        context.irBuiltIns.unitType as IrTypeArgument
       ))
 
-    return irCall(symbolRFunctionBuilder, rClassType).apply {
+    return irCall(functions.react.rFunction, rClassType).apply {
       putTypeArgument(0, propsType)
       putValueArgument(0, irString(name))
       putValueArgument(1, buildLambda(context.irBuiltIns.unitType, lambdaType) {
         val function = this
         // TODO currently = $receiver: VALUE_PARAMETER name:$receiver type:test.RBuilder
-        addExtensionReceiver { type = typeRBuilder }
+        addExtensionReceiver { type = classes.react.RBuilder }
         addValueParameter("props", propsType)
         this.body = context.irBuilder(symbol).irBlockBody { body(function) }
       })
@@ -264,14 +259,13 @@ BLOCK_BODY
     <set-?>: GET_VAR 'name: kotlin.String declared in test.ExpectedHome' type=kotlin.String origin=null
            */
           val rElementBuilder = function.extensionReceiverParameter!!
+          val properties = propsClass.declarations.filterIsInstance<IrProperty>().associateBy { it.name }
 
           for (valueParameter in declaration.valueParameters) {
-            val property = propsClass.declarations
-              .filterIsInstance<IrProperty>()
-              .single { it.name == valueParameter.name }
+            val property = properties.getValue(valueParameter.name)
 
             +irCall(property.setter!!, origin = IrStatementOrigin.EQ).apply {
-              val callee = symbolAttrsProperty.owner.getter!!
+              val callee = functions.react.RElementBuilder.attrs.owner.getter!!
               this.dispatchReceiver = IrCallImpl(startOffset, endOffset, propsClass.defaultType, callee.symbol, callee.typeParameters.size, callee.valueParameters.size, IrStatementOrigin.GET_PROPERTY).apply {
                 this.dispatchReceiver = irGet(rElementBuilder)
               }
@@ -297,14 +291,14 @@ CALL 'public final fun invoke <P> (handler: @[ExtensionFunctionType] kotlin.Func
      */
 
     // TODO type=@[ExtensionFunctionType]?
-    val typeRElementBuilder = symbolRElementBuilder.createType(false, listOf(propsType as IrTypeArgument))
-    val lambdaType = this@ReactFunctionCallTransformer.context.irBuiltIns.function(1)
+    val typeRElementBuilder = classes.react.RElementBuilder(propsType)
+    val lambdaType = context.irBuiltIns.function(1)
       .createType(false, listOf(
         typeRElementBuilder as IrTypeArgument,
-        this@ReactFunctionCallTransformer.context.irBuiltIns.unitType as IrTypeArgument
+        context.irBuiltIns.unitType as IrTypeArgument
       ))
 
-    return irCall(symbolInvokeFunction, typeReactElement).apply {
+    return irCall(functions.react.RBuilder.invoke, classes.react.ReactElement).apply {
       putTypeArgument(0, propsType)
       this.dispatchReceiver = dispatchReceiver
       this.extensionReceiver = extensionReceiver
