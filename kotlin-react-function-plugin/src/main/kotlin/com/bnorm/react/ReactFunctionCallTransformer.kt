@@ -93,7 +93,6 @@ class ReactFunctionCallTransformer(
     file = irFile
     fileSource = File(irFile.path).readText()
 
-    println(file.dump())
     irFile.transformChildrenVoid()
     irFile.declarations.addAll(newDeclarations.filter { it.parent == irFile })
   }
@@ -106,11 +105,19 @@ class ReactFunctionCallTransformer(
   }
 
   private fun validateSignature(declaration: IrSimpleFunction): Boolean {
-    if (declaration.annotations.none { it.type == classes.com_bnorm_react.RFunction }) return false
+    if (declaration.annotations.none { it.type == classes.com_bnorm_react.RFunction }) {
+      val first = declaration.valueParameters.firstOrNull { parameter -> parameter.annotations.any { it.type == classes.com_bnorm_react.RKey } }
+      if (first != null) {
+        val line = fileSource.substring(first.startOffset).count { it == '\n' } + 1
+        val location = CompilerMessageLocation.create(file.path, line, -1, null)
+        messageCollector.report(CompilerMessageSeverity.ERROR, "RKey may only be used on function annotated with RFunction", location)
+      }
+
+      return false
+    }
 
     val location by lazy {
       val line = fileSource.substring(declaration.startOffset).count { it == '\n' } + 1
-      println(line)
       CompilerMessageLocation.create(file.path, line, -1, null)
     }
 
@@ -127,6 +134,12 @@ class ReactFunctionCallTransformer(
 
     if (declaration.returnType != context.irBuiltIns.unitType) {
       messageCollector.report(CompilerMessageSeverity.ERROR, "RFunction annotated function must return Unit", location)
+      result = false
+    }
+
+    val keys = declaration.valueParameters.count { it.annotations.any { it.type == classes.com_bnorm_react.RKey } }
+    if (keys > 1) {
+      messageCollector.report(CompilerMessageSeverity.ERROR, "RKey may only be applied to a single parameter", location)
       result = false
     }
 
@@ -209,17 +222,6 @@ class ReactFunctionCallTransformer(
 
   // TODO better name?
   private fun IrBuilderWithScope.irCall_rFunction(propsType: IrType, name: String, body: IrBlockBodyBuilder.(IrSimpleFunction) -> Unit): IrCall {
-    /*
-CALL 'public final fun rFunction <P> (displayName: kotlin.String, render: @[ExtensionFunctionType] kotlin.Function2<test.RBuilder, P of test.rFunction, kotlin.Unit>): test.RClass<P of test.rFunction> [inline] declared in test' type=test.RClass<test.ExpectedHomeProps> origin=null
-  <P>: test.ExpectedHomeProps
-  displayName: CONST String type=kotlin.String value="ExpectedHome"
-  render: FUN_EXPR type=@[ExtensionFunctionType] kotlin.Function2<test.RBuilder, test.ExpectedHomeProps, kotlin.Unit> origin=LAMBDA
-    FUN LOCAL_FUNCTION_FOR_LAMBDA name:<anonymous> visibility:local modality:FINAL <> ($receiver:test.RBuilder, props:test.ExpectedHomeProps) returnType:kotlin.Unit
-      $receiver: VALUE_PARAMETER name:<this> type:test.RBuilder
-      VALUE_PARAMETER name:props index:0 type:test.ExpectedHomeProps
-      BLOCK_BODY
-     */
-
     val rClassType = classes.react.RClass(propsType)
 
     // TODO type=@[ExtensionFunctionType]?
@@ -251,13 +253,6 @@ CALL 'public final fun rFunction <P> (displayName: kotlin.String, render: @[Exte
           irGet(declaration.extensionReceiverParameter!!),
           irCall(componentProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY)
         ) { function ->
-          /*
-BLOCK_BODY
-  CALL 'public abstract fun <set-name> (<set-?>: kotlin.String): kotlin.Unit declared in test.ExpectedHomeProps' type=kotlin.Unit origin=EQ
-    $this: CALL 'public open fun <get-attrs> (): P of test.RElementBuilder declared in test.RElementBuilder' type=test.ExpectedHomeProps origin=GET_PROPERTY
-      $this: GET_VAR '<this>: test.RElementBuilder<test.ExpectedHomeProps> declared in test.ExpectedHome.<anonymous>' type=test.RElementBuilder<test.ExpectedHomeProps> origin=null
-    <set-?>: GET_VAR 'name: kotlin.String declared in test.ExpectedHome' type=kotlin.String origin=null
-           */
           val rElementBuilder = function.extensionReceiverParameter!!
           val properties = propsClass.declarations.filterIsInstance<IrProperty>().associateBy { it.name }
 
@@ -272,6 +267,18 @@ BLOCK_BODY
               this.putValueArgument(0, irGet(valueParameter))
             }
           }
+
+          val keyParameter = declaration.valueParameters.singleOrNull { parameter ->
+            parameter.annotations.any { it.type == classes.com_bnorm_react.RKey }
+          }
+          if (keyParameter != null) {
+            +irCall(functions.react.RElementBuilder.key.owner.setter!!, origin = IrStatementOrigin.EQ).apply {
+              this.dispatchReceiver = irGet(rElementBuilder)
+              this.putValueArgument(0, irCall(functions.kotlin.toString).apply {
+                this.extensionReceiver = irGet(keyParameter)
+              })
+            }
+          }
         }
       }
     }
@@ -279,17 +286,6 @@ BLOCK_BODY
 
   // TODO better name?
   private fun IrBuilderWithScope.irCall_invoke(propsType: IrType, dispatchReceiver: IrExpression, extensionReceiver: IrExpression, body: IrBlockBodyBuilder.(IrSimpleFunction) -> Unit): IrCall {
-    /*
-CALL 'public final fun invoke <P> (handler: @[ExtensionFunctionType] kotlin.Function1<test.RElementBuilder<P of test.RBuilder.invoke>, kotlin.Unit>{ test.RHandler<P of test.RBuilder.invoke> }): test.ReactElement [operator] declared in test.RBuilder' type=test.ReactElement origin=null
-  <P>: test.ExpectedHomeProps
-  $this: GET_VAR '<this>: test.RBuilder declared in test.ExpectedHome' type=test.RBuilder origin=null
-  $receiver: CALL 'private final fun <get-EXPECTED_HOME> (): test.RClass<test.ExpectedHomeProps> declared in test' type=test.RClass<test.ExpectedHomeProps> origin=GET_PROPERTY
-  handler: FUN_EXPR type=@[ExtensionFunctionType] kotlin.Function1<test.RElementBuilder<test.ExpectedHomeProps>, kotlin.Unit> origin=LAMBDA
-    FUN LOCAL_FUNCTION_FOR_LAMBDA name:<anonymous> visibility:local modality:FINAL <> ($receiver:test.RElementBuilder<test.ExpectedHomeProps>) returnType:kotlin.Unit
-      $receiver: VALUE_PARAMETER name:<this> type:test.RElementBuilder<test.ExpectedHomeProps>
-      BLOCK_BODY
-     */
-
     // TODO type=@[ExtensionFunctionType]?
     val typeRElementBuilder = classes.react.RElementBuilder(propsType)
     val lambdaType = context.irBuiltIns.function(1)

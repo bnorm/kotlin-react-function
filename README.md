@@ -6,6 +6,8 @@ Writing functional components with Kotlin/JS for React is great but requires a
 bit of boilerplate which makes each new component require some setup. Most of
 this boilerplate is extremely simple, perfect for automation.
 
+## Introduction
+
 Consider the following example React functional component written with
 Kotlin/JS:
 
@@ -37,7 +39,6 @@ This is really nice and clean! Because it is not (currently) a React component,
 it cannot take advantage of React hooks. With the Kotlin compiler plugin
 provided by this library, making this function a React component is as simple as
 adding an annotation! (and Gradle dependency stuff)
-
 
 ```kotlin
 @RFunction
@@ -71,7 +72,7 @@ plugins {
 }
 ```
 
-Annotation is available via Maven Central:
+Annotations are available via Maven Central:
 
 ```kotlin
 implementation("com.bnorm.react:kotlin-react-function:0.1.0")
@@ -86,6 +87,34 @@ kotlin {
   }
 }
 ```
+
+## Advanced Topics
+
+### Component Key
+
+To set the key of a React functional component, use the `@RKey` annotation on a
+single parameter to a `@RFunction` annotated function.
+
+```kotlin
+@RFunction
+fun RBuilder.ListItem(@RKey item: Item) {
+  ...
+}
+```
+
+This uses the `toString()` value of the annotated parameter as the key for the
+component. If the value of the key needs to be controlled more explicitly, mark 
+an unused parameter as the key.
+
+```kotlin
+@RFunction
+fun RBuilder.Component(... other parameters ..., @RKey key: String) {
+  // `key` doesn't need to be used to be set as the key of the component
+}
+```
+
+If the `@RKey` annotated parameter is `null`, then the string `"null"` will be
+set as the component key.
 
 [sample]: https://github.com/bnorm/kotlin-react-function/blob/master/sample
 [kotlin-react-function-gradle]: https://plugins.gradle.org/plugin/com.bnorm.react.kotlin-react-function

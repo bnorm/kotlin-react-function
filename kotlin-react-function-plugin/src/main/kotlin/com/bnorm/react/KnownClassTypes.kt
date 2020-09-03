@@ -20,6 +20,7 @@ internal class KnownClassTypes(context: IrPluginContext, classes: KnownClassSymb
   val com_bnorm_react: BnormReactPackage = BnormReactPackage(context, classes)
   class BnormReactPackage(context: IrPluginContext, classes: KnownClassSymbols) {
     val RFunction = classes.com_bnorm_react.RFunction.createType(false, emptyList())
+    val RKey = classes.com_bnorm_react.RKey.createType(false, emptyList())
   }
 }
 

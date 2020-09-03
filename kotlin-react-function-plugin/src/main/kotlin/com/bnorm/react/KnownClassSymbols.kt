@@ -18,5 +18,6 @@ internal class KnownClassSymbols(context: IrPluginContext) {
   val com_bnorm_react: BnormReactPackage = BnormReactPackage(context)
   class BnormReactPackage(context: IrPluginContext) {
     val RFunction = context.referenceClass(FqName("com.bnorm.react.RFunction"))!!
+    val RKey = context.referenceClass(FqName("com.bnorm.react.RKey"))!!
   }
 }

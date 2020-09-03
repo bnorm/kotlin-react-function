@@ -24,7 +24,13 @@ internal class KnownFunctionSymbols(context: IrPluginContext, types: KnownClassT
 
     val RElementBuilder = RElementBuilderClass(context, types)
     class RElementBuilderClass(context: IrPluginContext, types: KnownClassTypes) {
-      val attrs = context.referenceProperties(FqName("react.RElementBuilder.attrs")).single()
+      val attrs = context.referenceProperties(FqName("react.RElementBuilder.attrs")).single() // TODO proper filter
+      val key = context.referenceProperties(FqName("react.RElementBuilder.key")).single() // TODO proper filter
     }
+  }
+
+  val kotlin: KotlinPackage = KotlinPackage(context, types)
+  class KotlinPackage(context: IrPluginContext, types: KnownClassTypes) {
+    val toString = context.referenceFunctions(FqName("kotlin.toString")).single() // TODO proper filter
   }
 }
