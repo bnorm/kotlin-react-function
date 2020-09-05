@@ -28,12 +28,15 @@ open class RElementBuilder<out P : RProps>(open val attrs: P) : RBuilder() {
   fun attrs(handler: P.() -> Unit) {
     attrs.handler()
   }
+  
+  var key: String = ""
 }
 """)
 
   private val comBnormReact = SourceFile.kotlin("com_bnorm_react.kt", """package com.bnorm.react
 
 annotation class RFunction
+annotation class RKey
 """)
 
   @Test

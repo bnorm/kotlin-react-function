@@ -71,7 +71,7 @@ publishing {
         licenses {
           license {
             name.set("Apache License 2.0")
-            url.set("https://github.com/bnorm/kotlin-react-function/blob/master/LICENSE.txt")
+            url.set("https://github.com/bnorm/kotlin-react-function/blob/main/LICENSE.txt")
           }
         }
         scm {

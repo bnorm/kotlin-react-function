@@ -114,7 +114,8 @@ fun RBuilder.Component(... other parameters ..., @RKey key: String) {
 ```
 
 If the `@RKey` annotated parameter is `null`, then the string `"null"` will be
-set as the component key.
+set as the component key. It is also possible to use default parameters to
+derive the key from another parameter.
 
-[sample]: https://github.com/bnorm/kotlin-react-function/blob/master/sample
+[sample]: https://github.com/bnorm/kotlin-react-function/blob/main/sample
 [kotlin-react-function-gradle]: https://plugins.gradle.org/plugin/com.bnorm.react.kotlin-react-function
