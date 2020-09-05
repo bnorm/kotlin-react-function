@@ -26,5 +26,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: site
           FOLDER: sample/build/distributions
-          TARGET_FOLDER: site
           CLEAN: true
