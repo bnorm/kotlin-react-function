@@ -33,9 +33,9 @@ class ReactFunctionGradlePlugin : KotlinCompilerPluginSupportPlugin {
     kotlinCompilation.platformType == KotlinPlatformType.js
 
   override fun getPluginArtifact(): SubpluginArtifact = SubpluginArtifact(
-    groupId = "com.bnorm.react",
-    artifactId = "kotlin-react-function-plugin",
-    version = "0.3.0-SNAPSHOT"
+    groupId = BuildConfig.PROJECT_GROUP_ID,
+    artifactId = BuildConfig.PROJECT_ARTIFACT_ID,
+    version = BuildConfig.PROJECT_VERSION
   )
 
   override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {
