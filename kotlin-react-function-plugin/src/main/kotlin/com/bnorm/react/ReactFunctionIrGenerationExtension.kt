@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.platform.js.isJs
 
 class ReactFunctionIrGenerationExtension(private val messageCollector: MessageCollector) : IrGenerationExtension {
   override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
-    if(moduleFragment.descriptor.platform.isJs()) {
+    if (moduleFragment.descriptor.platform.isJs()) {
       for (file in moduleFragment.files) {
         ReactFunctionCallTransformer(pluginContext, messageCollector).runOnFileInOrder(file)
       }
