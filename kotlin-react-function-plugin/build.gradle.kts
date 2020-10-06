@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 
 plugins {
   kotlin("jvm")
@@ -7,6 +8,13 @@ plugins {
 
   signing
   `maven-publish`
+}
+
+val jsCompileTest by configurations.creating {
+  attributes {
+    attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir)
+    attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, "kotlin-runtime"))
+  }
 }
 
 dependencies {
@@ -18,11 +26,19 @@ dependencies {
 
   testImplementation(kotlin("test-junit"))
   testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable")
-  testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.2.6")
+  testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.3.0")
 
-  // Include Kotlin/JS dependencies for tests to inherit
-  testImplementation(kotlin("stdlib-js"))
+  jsCompileTest(kotlin("stdlib-js"))
+  jsCompileTest(project(":kotlin-react-function"))
+  jsCompileTest("org.jetbrains:kotlin-react-dom:16.13.1-pre.123-kotlin-1.4.10")
 }
+
+// Download and relocate the Kotlin/JS dependencies for use by unit tests
+val jsCompileTestDownload by tasks.registering(Copy::class) {
+  from(jsCompileTest)
+  into("$buildDir/jsJars")
+}
+tasks.test.configure { dependsOn(jsCompileTestDownload) }
 
 tasks.withType<KotlinCompile> {
   kotlinOptions.jvmTarget = "1.8"
