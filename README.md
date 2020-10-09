@@ -67,15 +67,15 @@ Builds of the Gradle plugin are available through the
 
 ```kotlin
 plugins {
-  kotlin("jvm") version "1.4.0"
-  id("com.bnorm.power.kotlin-react-function") version "0.2.0"
+  kotlin("jvm") version "1.4.10"
+  id("com.bnorm.power.kotlin-react-function") version "0.2.1"
 }
 ```
 
 Annotations are available via Maven Central:
 
 ```kotlin
-implementation("com.bnorm.react:kotlin-react-function:0.2.0")
+implementation("com.bnorm.react:kotlin-react-function:0.2.1")
 ```
 
 Make sure Kotlin/JS is configured to compile using IR!
