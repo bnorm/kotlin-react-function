@@ -16,6 +16,7 @@
 
 package com.bnorm.react
 
+import java.io.File
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -23,7 +24,7 @@ import org.jetbrains.kotlin.backend.common.ir.setDeclarationsParent
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
@@ -43,8 +44,8 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.impl.IrBodyBase
 import org.jetbrains.kotlin.ir.declarations.path
+import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrBodyBase
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrCall
@@ -56,13 +57,11 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.Name
-import java.io.File
 
 fun FileLoweringPass.runOnFileInOrder(irFile: IrFile) {
   irFile.acceptVoid(object : IrElementVisitorVoid {
@@ -163,7 +162,7 @@ class ReactFunctionCallTransformer(
   private fun IrGeneratorContext.buildPropsInterface(declaration: IrSimpleFunction): IrClass {
     val irClass = buildExternalInterface(
       name = "${declaration.name}FuncProps",
-      visibility = Visibilities.PRIVATE,
+      visibility = DescriptorVisibilities.PRIVATE,
       superTypes = listOf(classes.react.RProps)
     )
     for (valueParameter in declaration.valueParameters) {
@@ -185,7 +184,7 @@ class ReactFunctionCallTransformer(
         val rBuilder = function.extensionReceiverParameter!!
         val props = function.valueParameters[0]
         for (statement in body.statements) {
-          +statement.transform(object : IrElementTransformerVoid() {
+          val transformed = statement.transform(object : IrElementTransformerVoid() {
             override fun visitGetValue(expression: IrGetValue): IrExpression {
 
               /*
@@ -205,7 +204,9 @@ class ReactFunctionCallTransformer(
                       dispatchReceiver = irGet(props)
                     }
                   }
-                } else if (owner.name == Name.special("<this>") && owner.parent == (body as IrBodyBase<*>).container) {
+                } else if (owner.name == Name.special("<this>") &&
+                  owner.parent == (body as PersistentIrBodyBase<*>).container
+                ) {
                   return context.irBuilder(expression.symbol).run {
                     irGet(rBuilder)
                   }
@@ -214,7 +215,9 @@ class ReactFunctionCallTransformer(
 
               return super.visitGetValue(expression)
             }
-          }, null).setDeclarationsParent(function)
+          }, null)
+          transformed.setDeclarationsParent(function)
+          +(transformed as IrStatement)
         }
       })
     }
@@ -238,7 +241,7 @@ class ReactFunctionCallTransformer(
       putValueArgument(1, buildLambda(context.irBuiltIns.unitType, lambdaType) {
         val function = this
         // TODO currently = $receiver: VALUE_PARAMETER name:$receiver type:test.RBuilder
-        addExtensionReceiver { type = classes.react.RBuilder }
+        addExtensionReceiver(type = classes.react.RBuilder)
         addValueParameter("props", propsType)
         this.body = context.irBuilder(symbol).irBlockBody { body(function) }
       })
@@ -300,7 +303,7 @@ class ReactFunctionCallTransformer(
       this.extensionReceiver = extensionReceiver
       putValueArgument(0, buildLambda(context.irBuiltIns.unitType, lambdaType) {
         val function = this
-        addExtensionReceiver { this.type = typeRElementBuilder }
+        addExtensionReceiver(type = typeRElementBuilder)
         this.body = context.irBuilder(symbol).irBlockBody { body(function) }
       })
     }
