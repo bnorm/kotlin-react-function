@@ -1,6 +1,6 @@
 plugins {
-  kotlin("js") version "1.4.10"
-  kotlin("plugin.serialization") version "1.4.10"
+  kotlin("js") version "1.4.21"
+  kotlin("plugin.serialization") version "1.4.21"
   id("com.bnorm.react.kotlin-react-function") version "0.2.0"
 }
 
@@ -13,19 +13,19 @@ repositories {
 
 kotlin {
   js(IR) {
-    browser { }
+    browser {}
     binaries.executable()
   }
 }
 
 dependencies {
   implementation(kotlin("stdlib-js"))
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0-RC2")
-  implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.1.0")
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
+  implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.1.1")
 
   implementation("com.bnorm.react:kotlin-react-function:0.2.0")
-  implementation("org.jetbrains:kotlin-react-dom:16.13.1-pre.123-kotlin-1.4.10")
-  implementation("org.jetbrains:kotlin-styled:5.2.0-pre.123-kotlin-1.4.10")
+  implementation("org.jetbrains:kotlin-react-dom:17.0.1-pre.144-kotlin-1.4.21")
+  implementation("org.jetbrains:kotlin-styled:5.2.0-pre.144-kotlin-1.4.21")
 
   implementation(npm("@reach/accordion", "^0.8.0"))
 }

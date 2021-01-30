@@ -4,15 +4,15 @@ import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.ir.createImplicitParameterDeclarationWithWrappedDescriptor
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.IrGeneratorContext
+import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
 import org.jetbrains.kotlin.ir.builders.declarations.addProperty
-import org.jetbrains.kotlin.ir.builders.declarations.addSetter
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildClass
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
@@ -25,13 +25,18 @@ import org.jetbrains.kotlin.ir.builders.parent
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
+import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunction
+import org.jetbrains.kotlin.ir.descriptors.WrappedFunctionDescriptorWithContainerSource
+import org.jetbrains.kotlin.ir.descriptors.WrappedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionExpressionImpl
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.name.Name
 
@@ -43,10 +48,10 @@ fun IrGeneratorContext.irBuilder(
 
 fun IrGeneratorContext.buildExternalInterface(
   name: String,
-  visibility: Visibility = Visibilities.PUBLIC,
+  visibility: DescriptorVisibility = DescriptorVisibilities.PUBLIC,
   superTypes: List<IrType>? = listOf(irBuiltIns.anyType)
 ): IrClass {
-  val irClass = buildClass {
+  val irClass = irFactory.buildClass {
     this.visibility = visibility
     kind = ClassKind.INTERFACE
     modality = Modality.ABSTRACT
@@ -126,23 +131,23 @@ fun IrGeneratorContext.buildStaticProperty(parent: IrDeclarationParent, fieldTyp
         RETURN type=kotlin.Nothing from='private final fun <get-HOME_RFUNC> (): test.RClass<test.HomeFuncProps> declared in test'
           GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:HOME_RFUNC type:test.RClass<test.HomeFuncProps> visibility:private [final,static]' type=test.RClass<test.HomeFuncProps> origin=null
  */
-  val irProperty = buildProperty {
+  val irProperty = irFactory.buildProperty {
     this.name = Name.identifier(name)
-    visibility = Visibilities.PRIVATE
+    visibility = DescriptorVisibilities.PRIVATE
     modality = Modality.FINAL
   }
   irProperty.parent = parent
 
   val irGetter = irProperty.addGetter {
-    visibility = Visibilities.PRIVATE
+    visibility = DescriptorVisibilities.PRIVATE
     modality = Modality.FINAL
     returnType = fieldType
     origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
   }
   irGetter.correspondingPropertySymbol = irProperty.symbol
 
-  val field = buildField {
-    visibility = Visibilities.PRIVATE
+  val field = irFactory.buildField {
+    visibility = DescriptorVisibilities.PRIVATE
     isStatic = true
     isFinal = true
     this.name = Name.identifier(name)
@@ -165,14 +170,40 @@ fun IrGeneratorContext.buildStaticProperty(parent: IrDeclarationParent, fieldTyp
 
 fun IrBuilderWithScope.buildLambda(returnType: IrType, lambdaType: IrType, builder: IrSimpleFunction.() -> Unit): IrFunctionExpression {
   val scope = this
-  val lambda = buildFun {
+  val lambda = context.irFactory.buildFun {
     name = Name.special("<anonymous>")
     this.returnType = returnType
-    visibility = Visibilities.LOCAL
+    visibility = DescriptorVisibilities.LOCAL
     origin = IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
   }.apply {
     builder()
     this.parent = scope.parent
   }
   return IrFunctionExpressionImpl(-1, -1, lambdaType, lambda, IrStatementOrigin.LAMBDA)
+}
+
+inline fun IrProperty.addSetter(builder: IrFunctionBuilder.() -> Unit = {}): IrSimpleFunction =
+  IrFunctionBuilder().run {
+    name = Name.special("<set-${this@addSetter.name}>")
+    builder()
+    factory.buildFunction(this).also { setter ->
+      this@addSetter.setter = setter
+      setter.parent = this@addSetter.parent
+    }
+  }
+
+@PublishedApi
+internal fun IrFactory.buildFunction(builder: IrFunctionBuilder): IrSimpleFunction = with(builder) {
+  val wrappedDescriptor = if (originalDeclaration is IrLazyFunction || containerSource != null)
+    WrappedFunctionDescriptorWithContainerSource()
+  else WrappedSimpleFunctionDescriptor()
+  createFunction(
+    startOffset, endOffset, origin,
+    IrSimpleFunctionSymbolImpl(wrappedDescriptor),
+    name, visibility, modality, returnType,
+    isInline, isExternal, isTailrec, isSuspend, isOperator, isInfix, isExpect, isFakeOverride,
+    containerSource
+  ).also {
+    wrappedDescriptor.bind(it)
+  }
 }

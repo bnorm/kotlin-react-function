@@ -30,7 +30,7 @@ dependencies {
 
   jsCompileTest(kotlin("stdlib-js"))
   jsCompileTest(project(":kotlin-react-function"))
-  jsCompileTest("org.jetbrains:kotlin-react-dom:16.13.1-pre.123-kotlin-1.4.10")
+  jsCompileTest("org.jetbrains:kotlin-react-dom:17.0.0-pre.129-kotlin-1.4.20")
 }
 
 // Download and relocate the Kotlin/JS dependencies for use by unit tests
