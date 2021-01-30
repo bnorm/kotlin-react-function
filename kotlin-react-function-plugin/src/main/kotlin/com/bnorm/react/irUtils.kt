@@ -202,7 +202,7 @@ internal fun IrFactory.buildFunction(builder: IrFunctionBuilder): IrSimpleFuncti
     IrSimpleFunctionSymbolImpl(wrappedDescriptor),
     name, visibility, modality, returnType,
     isInline, isExternal, isTailrec, isSuspend, isOperator, isInfix, isExpect, isFakeOverride,
-    containerSource,
+    containerSource
   ).also {
     wrappedDescriptor.bind(it)
   }
