@@ -27,5 +27,5 @@ dependencies {
   implementation("org.jetbrains:kotlin-react-dom:17.0.1-pre.144-kotlin-1.4.21")
   implementation("org.jetbrains:kotlin-styled:5.2.0-pre.144-kotlin-1.4.21")
 
-  implementation(npm("@reach/accordion", "^0.8.0"))
+  implementation(npm("@reach/accordion", "^0.13.0"))
 }

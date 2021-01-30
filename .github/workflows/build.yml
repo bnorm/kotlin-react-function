@@ -17,7 +17,7 @@ jobs:
           java-version: 11
 
       - run: ./gradlew build
-      - run: cd sample && ./gradlew build browserDistribution || cd ..
+      - run: cd sample && ./gradlew build browserDistribution
 
       - name: Deploy sample website
         if: ${{ github.ref == 'refs/heads/main' && github.repository == 'bnorm/kotlin-react-function' }}
