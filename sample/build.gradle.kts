@@ -28,4 +28,5 @@ dependencies {
   implementation("org.jetbrains:kotlin-styled:5.2.0-pre.144-kotlin-1.4.21")
 
   implementation(npm("@reach/accordion", "^0.13.0"))
+  implementation(npm("prop-types", "^15.6.2")) // Not sure why this is needed...
 }
