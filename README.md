@@ -54,11 +54,18 @@ component, automatically assigning all the component attributes. Magic!
 ## Work In Progress
 
 This library is a work in progress and requires using Kotlin/JS IR backend for
-compilation. This compiler feature is currently in preview and is not ready for
+compilation and often requires a specific version of Kotlin as well. The
+Kotlin/JS IR backend is currently in preview and is not recommended for
 production. Use at your own risk!
 
-See the [sample][sample] directory for a working example project using this compiler
-plugin!
+| Kotlin Version | Plugin Version |
+| -------------- | -------------- |
+| 1.4.10         | 0.2.1          |
+| 1.4.20         | 0.3.0          |
+
+See the [sample][sample] directory for a working project using this compiler
+plugin which is also
+[available live](https://bnorm.github.io/kotlin-react-function/).
 
 ## Gradle Plugin
 
@@ -67,15 +74,15 @@ Builds of the Gradle plugin are available through the
 
 ```kotlin
 plugins {
-  kotlin("jvm") version "1.4.10"
-  id("com.bnorm.power.kotlin-react-function") version "0.2.1"
+  kotlin("jvm") version "1.4.21"
+  id("com.bnorm.power.kotlin-react-function") version "0.3.0"
 }
 ```
 
 Annotations are available via Maven Central:
 
 ```kotlin
-implementation("com.bnorm.react:kotlin-react-function:0.2.1")
+implementation("com.bnorm.react:kotlin-react-function:0.3.0")
 ```
 
 Make sure Kotlin/JS is configured to compile using IR!
