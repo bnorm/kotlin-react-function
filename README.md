@@ -62,6 +62,7 @@ production. Use at your own risk!
 | -------------- | -------------- |
 | 1.4.10         | 0.2.1          |
 | 1.4.20         | 0.3.0          |
+| 1.4.40         | 0.4.0          |
 
 See the [sample][sample] directory for a working project using this compiler
 plugin which is also
@@ -74,15 +75,15 @@ Builds of the Gradle plugin are available through the
 
 ```kotlin
 plugins {
-  kotlin("jvm") version "1.4.21"
-  id("com.bnorm.power.kotlin-react-function") version "0.3.0"
+  kotlin("jvm") version "1.4.30"
+  id("com.bnorm.power.kotlin-react-function") version "0.4.0"
 }
 ```
 
 Annotations are available via Maven Central:
 
 ```kotlin
-implementation("com.bnorm.react:kotlin-react-function:0.3.0")
+implementation("com.bnorm.react:kotlin-react-function:0.4.0")
 ```
 
 Make sure Kotlin/JS is configured to compile using IR!
