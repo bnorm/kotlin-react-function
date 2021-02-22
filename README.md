@@ -62,7 +62,7 @@ production. Use at your own risk!
 | -------------- | -------------- |
 | 1.4.10         | 0.2.1          |
 | 1.4.20         | 0.3.0          |
-| 1.4.40         | 0.4.0          |
+| 1.4.30         | 0.4.0          |
 
 See the [sample][sample] directory for a working project using this compiler
 plugin which is also
