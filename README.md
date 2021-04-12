@@ -76,7 +76,7 @@ Builds of the Gradle plugin are available through the
 ```kotlin
 plugins {
   kotlin("jvm") version "1.4.30"
-  id("com.bnorm.power.kotlin-react-function") version "0.4.0"
+  id("com.bnorm.react.kotlin-react-function") version "0.4.0"
 }
 ```
 
