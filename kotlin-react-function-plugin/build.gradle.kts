@@ -18,19 +18,18 @@ val jsCompileTest by configurations.creating {
 }
 
 dependencies {
-  implementation(kotlin("stdlib-jdk8"))
   compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable")
 
-  kapt("com.google.auto.service:auto-service:1.0-rc6")
-  compileOnly("com.google.auto.service:auto-service-annotations:1.0-rc6")
+  kapt("com.google.auto.service:auto-service:1.0")
+  compileOnly("com.google.auto.service:auto-service-annotations:1.0")
 
   testImplementation(kotlin("test-junit"))
   testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable")
-  testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.3.0")
+  testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.3.6")
 
   jsCompileTest(kotlin("stdlib-js"))
   jsCompileTest(project(":kotlin-react-function"))
-  jsCompileTest("org.jetbrains:kotlin-react-dom:17.0.0-pre.129-kotlin-1.4.20")
+  jsCompileTest("org.jetbrains:kotlin-react-dom:17.0.2-pre.154-kotlin-1.5.0")
 }
 
 // Download and relocate the Kotlin/JS dependencies for use by unit tests

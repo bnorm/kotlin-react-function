@@ -28,9 +28,6 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunction
-import org.jetbrains.kotlin.ir.descriptors.WrappedFunctionDescriptorWithContainerSource
-import org.jetbrains.kotlin.ir.descriptors.WrappedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
@@ -194,16 +191,11 @@ inline fun IrProperty.addSetter(builder: IrFunctionBuilder.() -> Unit = {}): IrS
 
 @PublishedApi
 internal fun IrFactory.buildFunction(builder: IrFunctionBuilder): IrSimpleFunction = with(builder) {
-  val wrappedDescriptor = if (originalDeclaration is IrLazyFunction || containerSource != null)
-    WrappedFunctionDescriptorWithContainerSource()
-  else WrappedSimpleFunctionDescriptor()
   createFunction(
     startOffset, endOffset, origin,
-    IrSimpleFunctionSymbolImpl(wrappedDescriptor),
+    IrSimpleFunctionSymbolImpl(),
     name, visibility, modality, returnType,
     isInline, isExternal, isTailrec, isSuspend, isOperator, isInfix, isExpect, isFakeOverride,
     containerSource
-  ).also {
-    wrappedDescriptor.bind(it)
-  }
+  )
 }

@@ -15,7 +15,6 @@ fun compile(
   val result = KotlinJsCompilation().apply {
     sources = listOf(SourceFile.kotlin("main.kt", source, trimIndent = false))
     irProduceJs = true
-    irProduceKlibFile = true
     messageOutputStream = System.out
     compilerPlugins = plugins.toList()
     kotlincArguments = listOf(

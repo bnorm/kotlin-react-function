@@ -45,7 +45,6 @@ import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.path
-import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrBodyBase
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrCall
@@ -205,7 +204,7 @@ class ReactFunctionCallTransformer(
                     }
                   }
                 } else if (owner.name == Name.special("<this>") &&
-                  owner.parent == (body as PersistentIrBodyBase<*>).container
+                  expression.type == classes.react.RBuilder
                 ) {
                   return context.irBuilder(expression.symbol).run {
                     irGet(rBuilder)
