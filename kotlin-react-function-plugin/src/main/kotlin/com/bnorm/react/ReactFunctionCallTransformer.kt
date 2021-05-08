@@ -20,6 +20,7 @@ import java.io.File
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.ir.remapTypeParameters
 import org.jetbrains.kotlin.backend.common.ir.setDeclarationsParent
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -56,6 +57,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.remapTypes
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
@@ -125,6 +127,11 @@ class ReactFunctionCallTransformer(
       result = false
     }
 
+    if (declaration.isInline) {
+      messageCollector.report(CompilerMessageSeverity.ERROR, "RFunction annotated function cannot be inline", location)
+      result = false
+    }
+
     if (declaration.extensionReceiverParameter?.type != classes.react.RBuilder) {
       messageCollector.report(CompilerMessageSeverity.ERROR, "RFunction annotated function must be an extension function of react.RBuilder", location)
       result = false
@@ -148,27 +155,32 @@ class ReactFunctionCallTransformer(
     val body = (declaration.body as? IrBlockBody) ?: return
     val parent = declaration.parent as IrDeclarationContainer
 
-    val props = context.buildPropsInterface(declaration)
-    props.parent = parent
-    newDeclarations.add(props)
+    val propsClass = context.buildPropsInterface(declaration)
+    propsClass.parent = parent
+    newDeclarations.add(propsClass)
 
-    val component = buildRFunctionProperty(parent, declaration, props, body)
+    val component = buildRFunctionProperty(parent, declaration, propsClass, body).apply {
+      val substitutionMap = (propsClass.typeParameters + declaration.typeParameters).associate { it.symbol to context.irBuiltIns.anyNType }
+      if (substitutionMap.isNotEmpty()) remapTypes(TypeSubstituteRemapper(substitutionMap))
+    }
     newDeclarations.add(component)
 
-    declaration.body = buildNewBody(props, component, declaration)
+    val propsType = propsClass.symbol.createType(false, propsClass.typeParameters.map { context.irBuiltIns.anyNType as IrTypeArgument })
+    declaration.body = buildNewBody(propsClass, propsType, component, declaration)
   }
 
   private fun IrGeneratorContext.buildPropsInterface(declaration: IrSimpleFunction): IrClass {
     val irClass = buildExternalInterface(
       name = "${declaration.name}FuncProps",
       visibility = DescriptorVisibilities.PRIVATE,
-      superTypes = listOf(classes.react.RProps)
+      superTypes = listOf(classes.react.RProps),
+      typeParameters = declaration.typeParameters
     )
     for (valueParameter in declaration.valueParameters) {
       addExternalVarProperty(
         container = irClass,
         name = valueParameter.name,
-        type = valueParameter.type
+        type = valueParameter.type.remapTypeParameters(declaration, irClass)
       )
     }
     return irClass
@@ -176,7 +188,7 @@ class ReactFunctionCallTransformer(
 
   private fun buildRFunctionProperty(parent: IrDeclarationParent, declaration: IrSimpleFunction, propsClass: IrClass, body: IrBlockBody): IrProperty {
     val fieldType = classes.react.RClass(propsClass.defaultType)
-    val name = "${declaration.name}_RFUNC".toUpperCase()
+    val name = "${declaration.name}_RFUNC".uppercase()
 
     return context.buildStaticProperty(parent, fieldType, name) {
       irExprBody(irCall_rFunction(propsClass.defaultType, "${declaration.name}") { function ->
@@ -247,11 +259,11 @@ class ReactFunctionCallTransformer(
     }
   }
 
-  private fun buildNewBody(propsClass: IrClass, componentProperty: IrProperty, declaration: IrSimpleFunction): IrBody {
+  private fun buildNewBody(propsClass: IrClass, propsType: IrType, componentProperty: IrProperty, declaration: IrSimpleFunction): IrBody {
     return context.irBuilder(declaration.symbol).run {
       irBlockBody {
         +irCall_invoke(
-          propsClass.defaultType,
+          propsType,
           irGet(declaration.extensionReceiverParameter!!),
           irCall(componentProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY)
         ) { function ->
@@ -263,7 +275,7 @@ class ReactFunctionCallTransformer(
 
             +irCall(property.setter!!, origin = IrStatementOrigin.EQ).apply {
               val callee = functions.react.RElementBuilder.attrs.owner.getter!!
-              this.dispatchReceiver = IrCallImpl(startOffset, endOffset, propsClass.defaultType, callee.symbol, callee.typeParameters.size, callee.valueParameters.size, IrStatementOrigin.GET_PROPERTY).apply {
+              this.dispatchReceiver = IrCallImpl(startOffset, endOffset, propsType, callee.symbol, callee.typeParameters.size, callee.valueParameters.size, IrStatementOrigin.GET_PROPERTY).apply {
                 this.dispatchReceiver = irGet(rElementBuilder)
               }
               this.putValueArgument(0, irGet(valueParameter))

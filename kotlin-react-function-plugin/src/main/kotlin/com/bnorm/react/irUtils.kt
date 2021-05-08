@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.builders.IrGeneratorContext
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
 import org.jetbrains.kotlin.ir.builders.declarations.addProperty
+import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildClass
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
@@ -28,13 +29,19 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrTypeParameter
+import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionExpressionImpl
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.util.TypeRemapper
+import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.substitute
 import org.jetbrains.kotlin.name.Name
 
 fun IrGeneratorContext.irBuilder(
@@ -46,16 +53,26 @@ fun IrGeneratorContext.irBuilder(
 fun IrGeneratorContext.buildExternalInterface(
   name: String,
   visibility: DescriptorVisibility = DescriptorVisibilities.PUBLIC,
-  superTypes: List<IrType>? = listOf(irBuiltIns.anyType)
+  superTypes: List<IrType>? = listOf(irBuiltIns.anyType),
+  typeParameters: List<IrTypeParameter>
 ): IrClass {
   val irClass = irFactory.buildClass {
     this.visibility = visibility
-    kind = ClassKind.INTERFACE
-    modality = Modality.ABSTRACT
-    isExternal = true
+    this.kind = ClassKind.INTERFACE
+    this.modality = Modality.ABSTRACT
+    this.isExternal = true
     this.name = Name.identifier(name)
   }
   superTypes?.let { irClass.superTypes = it }
+  for (typeParameter in typeParameters) {
+    irClass.addTypeParameter {
+      this.name = typeParameter.name
+      this.origin = typeParameter.origin
+      this.index = typeParameter.index
+      this.superTypes.addAll(typeParameter.superTypes)
+      this.variance = typeParameter.variance
+    }
+  }
   irClass.createImplicitParameterDeclarationWithWrappedDescriptor()
   return irClass
 }
@@ -74,6 +91,16 @@ PROPERTY name:name visibility:public modality:ABSTRACT [var]
     correspondingProperty: PROPERTY name:name visibility:public modality:ABSTRACT [var]
     $this: VALUE_PARAMETER name:<this> type:test.HomeProps
     VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String
+
+
+PROPERTY name:items visibility:public modality:ABSTRACT [var]
+  FUN DEFAULT_PROPERTY_ACCESSOR name:<get-items> visibility:public modality:ABSTRACT <> ($this:<root>.GenericListProps<T of <root>.GenericListProps>) returnType:kotlin.collections.List<T of <root>.GenericListProps>
+    correspondingProperty: PROPERTY name:items visibility:public modality:ABSTRACT [var]
+    $this: VALUE_PARAMETER name:<this> type:<root>.GenericListProps<T of <root>.GenericListProps>
+  FUN DEFAULT_PROPERTY_ACCESSOR name:<set-items> visibility:public modality:ABSTRACT <> ($this:<root>.GenericListProps<T of <root>.GenericListProps>, <set-?>:kotlin.collections.List<T of <root>.GenericListProps>) returnType:kotlin.Unit
+    correspondingProperty: PROPERTY name:items visibility:public modality:ABSTRACT [var]
+    $this: VALUE_PARAMETER name:<this> type:<root>.GenericListProps<T of <root>.GenericListProps>
+    VALUE_PARAMETER name:<set-?> index:0 type:kotlin.collections.List<T of <root>.GenericListProps>
  */
 
   val irProperty = container.addProperty {
@@ -89,7 +116,7 @@ PROPERTY name:name visibility:public modality:ABSTRACT [var]
     returnType = type
     origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
   }
-  irGetter.dispatchReceiverParameter = container.thisReceiver!!.copyTo(irGetter, IrDeclarationOrigin.DEFINED)
+  irGetter.dispatchReceiverParameter = container.thisReceiver!!.copyTo(irGetter, IrDeclarationOrigin.DEFINED, type = container.defaultType)
   irGetter.correspondingPropertySymbol = irProperty.symbol
 
   val irSetter = irProperty.addSetter {
@@ -98,7 +125,7 @@ PROPERTY name:name visibility:public modality:ABSTRACT [var]
     returnType = irBuiltIns.unitType
     origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
   }
-  irSetter.dispatchReceiverParameter = container.thisReceiver!!.copyTo(irSetter, IrDeclarationOrigin.DEFINED)
+  irSetter.dispatchReceiverParameter = container.thisReceiver!!.copyTo(irSetter, IrDeclarationOrigin.DEFINED, type = container.defaultType)
   irSetter.correspondingPropertySymbol = irProperty.symbol
   irSetter.addValueParameter {
     this.name = Name.special("<set-?>")
@@ -198,4 +225,13 @@ internal fun IrFactory.buildFunction(builder: IrFunctionBuilder): IrSimpleFuncti
     isInline, isExternal, isTailrec, isSuspend, isOperator, isInfix, isExpect, isFakeOverride,
     containerSource
   )
+}
+
+class TypeSubstituteRemapper(
+  private val substitutionMap: Map<IrTypeParameterSymbol, IrType>
+  ) : TypeRemapper {
+  override fun remapType(type: IrType): IrType = type.substitute(substitutionMap)
+
+  override fun enterScope(irTypeParametersContainer: IrTypeParametersContainer) = Unit
+  override fun leaveScope() = Unit
 }

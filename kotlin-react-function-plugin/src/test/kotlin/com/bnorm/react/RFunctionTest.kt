@@ -23,4 +23,26 @@ fun RBuilder.Welcome(name: String) {
     assertTrue("var WELCOME_RFUNC" in javascript)
     assertTrue("WELCOME_RFUNC = rFunction('Welcome'," in javascript)
   }
+
+  @Test
+  fun genericComponent() {
+    val output = compile("""
+import com.bnorm.react.*
+import react.*
+import react.dom.div
+
+@RFunction
+fun <T> RBuilder.GenericList(items: List<T>, onItem: RBuilder.(T) -> Unit) {
+  div {
+    for (item in items) {
+      onItem(item)
+    }
+  }
+}
+""")
+    val javascript = output.readText()
+    assertTrue("function GenericList(_this_, items, onItem)" in javascript)
+    assertTrue("var GENERICLIST_RFUNC" in javascript)
+    assertTrue("GENERICLIST_RFUNC = rFunction('GenericList'," in javascript)
+  }
 }
