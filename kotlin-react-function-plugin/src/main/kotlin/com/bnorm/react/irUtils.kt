@@ -91,16 +91,6 @@ PROPERTY name:name visibility:public modality:ABSTRACT [var]
     correspondingProperty: PROPERTY name:name visibility:public modality:ABSTRACT [var]
     $this: VALUE_PARAMETER name:<this> type:test.HomeProps
     VALUE_PARAMETER name:<set-?> index:0 type:kotlin.String
-
-
-PROPERTY name:items visibility:public modality:ABSTRACT [var]
-  FUN DEFAULT_PROPERTY_ACCESSOR name:<get-items> visibility:public modality:ABSTRACT <> ($this:<root>.GenericListProps<T of <root>.GenericListProps>) returnType:kotlin.collections.List<T of <root>.GenericListProps>
-    correspondingProperty: PROPERTY name:items visibility:public modality:ABSTRACT [var]
-    $this: VALUE_PARAMETER name:<this> type:<root>.GenericListProps<T of <root>.GenericListProps>
-  FUN DEFAULT_PROPERTY_ACCESSOR name:<set-items> visibility:public modality:ABSTRACT <> ($this:<root>.GenericListProps<T of <root>.GenericListProps>, <set-?>:kotlin.collections.List<T of <root>.GenericListProps>) returnType:kotlin.Unit
-    correspondingProperty: PROPERTY name:items visibility:public modality:ABSTRACT [var]
-    $this: VALUE_PARAMETER name:<this> type:<root>.GenericListProps<T of <root>.GenericListProps>
-    VALUE_PARAMETER name:<set-?> index:0 type:kotlin.collections.List<T of <root>.GenericListProps>
  */
 
   val irProperty = container.addProperty {
@@ -229,7 +219,7 @@ internal fun IrFactory.buildFunction(builder: IrFunctionBuilder): IrSimpleFuncti
 
 class TypeSubstituteRemapper(
   private val substitutionMap: Map<IrTypeParameterSymbol, IrType>
-  ) : TypeRemapper {
+) : TypeRemapper {
   override fun remapType(type: IrType): IrType = type.substitute(substitutionMap)
 
   override fun enterScope(irTypeParametersContainer: IrTypeParametersContainer) = Unit
