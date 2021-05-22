@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+## [v0.5.0] - 2021-05-22
+
+**New**
+* Support Kotlin 1.5.0
+* Support generic functions (#12)
+
 ## [v0.4.0] - 2021-02-07
 
 **New**
