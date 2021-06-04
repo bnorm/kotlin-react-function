@@ -21,7 +21,7 @@ fun RBuilder.Welcome(name: String) {
     val javascript = output.readText()
     assertTrue("function Welcome(_this_, name)" in javascript)
     assertTrue("var WELCOME_RFUNC" in javascript)
-    assertTrue("WELCOME_RFUNC = rFunction('Welcome'," in javascript)
+    assertTrue("WELCOME_RFUNC = functionalComponent('Welcome'," in javascript)
   }
 
   @Test
@@ -43,6 +43,6 @@ fun <T> RBuilder.GenericList(items: List<T>, onItem: RBuilder.(T) -> Unit) {
     val javascript = output.readText()
     assertTrue("function GenericList(_this_, items, onItem)" in javascript)
     assertTrue("var GENERICLIST_RFUNC" in javascript)
-    assertTrue("GENERICLIST_RFUNC = rFunction('GenericList'," in javascript)
+    assertTrue("GENERICLIST_RFUNC = functionalComponent('GenericList'," in javascript)
   }
 }
