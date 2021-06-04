@@ -3,15 +3,23 @@
 package com.bnorm.react
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
+import org.jetbrains.kotlin.ir.types.impl.buildSimpleType
 
 internal class KnownClassTypes(context: IrPluginContext, classes: KnownClassSymbols = KnownClassSymbols(context)) {
   val react: ReactPackage = ReactPackage(context, classes)
   class ReactPackage(context: IrPluginContext, private val classes: KnownClassSymbols) {
     val RProps = classes.react.RProps.createType(false, emptyList())
-    fun RClass(type: IrType = RProps) = classes.react.RClass.createType(false, listOf(type as IrTypeArgument))
+    fun FunctionalComponent(type: IrType = RProps): IrSimpleType {
+      val typeAlias = classes.react.FunctionalComponent.owner.expandedType as IrSimpleType
+      return typeAlias.buildSimpleType {
+        arguments = listOf(type as IrTypeArgument)
+      }
+    }
+
     val ReactElement = classes.react.ReactElement.createType(false, emptyList())
     val RBuilder = classes.react.RBuilder.createType(false, emptyList())
     fun RElementBuilder(type: IrType = RProps) = classes.react.RElementBuilder.createType(false, listOf(type as IrTypeArgument))

@@ -15,7 +15,7 @@ import com.bnorm.react.components.AddItemFormStyles as styles
 @RFunction
 fun RBuilder.AddItemForm() {
   val dispatch = useAppReducer()
-  val inputRef = useRef<HTMLInputElement?>(null)
+  val inputRef = useRef<HTMLInputElement>()
 
   fun addItem(e: Event) {
     val inputElement = inputRef.current!!
