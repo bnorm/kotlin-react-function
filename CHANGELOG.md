@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+## [v0.5.1] - 2021-06-04
+
+**Fixes**
+* Generate components with `functionalComponent` rather than `rFunction`. (#22)
+
 ## [v0.5.0] - 2021-05-22
 
 **New**
@@ -31,6 +36,8 @@ Change Log
 
 Initial release.
 
+[v0.5.1]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.5.1
+[v0.5.0]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.5.0
 [v0.4.0]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.4.0
 [v0.3.0]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.3.0
 [v0.2.1]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.2.1

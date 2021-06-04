@@ -1,7 +1,7 @@
 plugins {
   kotlin("js") version "1.5.10"
   kotlin("plugin.serialization") version "1.5.10"
-  id("com.bnorm.react.kotlin-react-function") version "0.5.0"
+  id("com.bnorm.react.kotlin-react-function") version "0.5.1"
 }
 
 repositories {
@@ -19,7 +19,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.0")
   implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.0")
 
-  implementation("com.bnorm.react:kotlin-react-function:0.5.0")
+  implementation("com.bnorm.react:kotlin-react-function:0.5.1")
   implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.206-kotlin-1.5.10")
   implementation("org.jetbrains.kotlin-wrappers:kotlin-styled:5.3.0-pre.206-kotlin-1.5.10")
 

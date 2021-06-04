@@ -8,26 +8,7 @@ this boilerplate is extremely simple, perfect for automation.
 
 ## Introduction
 
-Consider the following example React functional component written with
-Kotlin/JS:
-
-```kotlin
-private external interface HelloProps : RProps {
-  var name: String
-}
-
-private val HELLO_COMPONENT = rFunction<HelloProps> { props ->
-  +"Hello, ${props.name}"
-}
-
-fun RBuilder.Hello(name: String) {
-  HELLO_COMPONENT.invoke {
-    attrs.name = name
-  }
-}
-```
-
-Now consider the following, free of boilerplate:
+Consider the following Kotlin/JS DOM builder function:
 
 ```kotlin
 fun RBuilder.Hello(name: String) {
@@ -35,10 +16,29 @@ fun RBuilder.Hello(name: String) {
 }
 ```
 
-This is really nice and clean! Because it is not (currently) a React component,
-it cannot take advantage of React hooks. With the Kotlin compiler plugin
-provided by this library, making this function a React component is as simple as
-adding an annotation! (and Gradle dependency stuff)
+This function adds text to the DOM but does not support any React hooks because
+it is not currently a React functional component. To do so requires a fair
+amount of boilerplate:
+
+```kotlin
+private external interface HelloProps : RProps {
+  var name: String
+}
+
+private val HELLO_COMPONENT = functionalComponent<HelloProps>("Hello") { props ->
+  +"Hello, ${props.name}"
+}
+
+fun RBuilder.Hello(name: String) {
+  child(HELLO_COMPONENT) {
+    attrs.name = name
+  }
+}
+```
+
+With the Kotlin compiler plugin provided by this library, making the original
+function a React component is as simple as adding an annotation! (and Gradle
+dependency stuff)
 
 ```kotlin
 @RFunction
@@ -47,9 +47,10 @@ fun RBuilder.Hello(name: String) {
 }
 ```
 
-The compiler plugin automatically generates the RProps interface and functional
-component RClass. It then rewrites the original function to invoke the
-component, automatically assigning all the component attributes. Magic!
+The compiler plugin automatically generates the RProps interface and the
+functional component property. It then rewrites the original function to add the
+component as a child and automatically assign all the component property
+attributes. Basically doing all the boilerplate for you automatically! Magic!
 
 ## Work In Progress
 
@@ -64,6 +65,7 @@ production. Use at your own risk!
 | 1.4.20         | 0.3.0          |
 | 1.4.30         | 0.4.0          |
 | 1.5.0          | 0.5.0          |
+| 1.5.10         | 0.5.1          |
 
 See the [sample][sample] directory for a working project using this compiler
 plugin which is also
@@ -76,15 +78,15 @@ Builds of the Gradle plugin are available through the
 
 ```kotlin
 plugins {
-  kotlin("jvm") version "1.5.0"
-  id("com.bnorm.react.kotlin-react-function") version "0.5.0"
+  kotlin("jvm") version "1.5.10"
+  id("com.bnorm.react.kotlin-react-function") version "0.5.1"
 }
 ```
 
 Annotations are available via Maven Central:
 
 ```kotlin
-implementation("com.bnorm.react:kotlin-react-function:0.5.0")
+implementation("com.bnorm.react:kotlin-react-function:0.5.1")
 ```
 
 Make sure Kotlin/JS is configured to compile using IR!
