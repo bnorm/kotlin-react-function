@@ -187,7 +187,7 @@ class ReactFunctionCallTransformer(
   }
 
   private fun buildFunctionalComponentProperty(parent: IrDeclarationParent, declaration: IrSimpleFunction, propsClass: IrClass, body: IrBlockBody): IrProperty {
-    val fieldType = classes.react.FunctionalComponent(propsClass.defaultType)
+    val fieldType = classes.react.FC(propsClass.defaultType)
     val name = "${declaration.name}_RFUNC".uppercase()
 
     return context.buildStaticProperty(parent, fieldType, name) {
@@ -244,7 +244,7 @@ class ReactFunctionCallTransformer(
         context.irBuiltIns.unitType as IrTypeArgument
       ))
 
-    return irCall(functions.react.functionalComponent, classes.react.ReactElement).apply {
+    return irCall(functions.react.fc, classes.react.ReactElement).apply {
       putTypeArgument(0, propsType)
       putValueArgument(0, irString(name))
       putValueArgument(1, buildLambda(context.irBuiltIns.unitType, lambdaType) {

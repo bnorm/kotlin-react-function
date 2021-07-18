@@ -10,11 +10,12 @@ import org.jetbrains.kotlin.name.FqName
 internal class KnownFunctionSymbols(context: IrPluginContext, types: KnownClassTypes = KnownClassTypes(context)) {
   val react: ReactPackage = ReactPackage(context, types)
   class ReactPackage(context: IrPluginContext, types: KnownClassTypes) {
-    val functionalComponent = context.referenceFunctions(FqName("react.functionalComponent")).single() // TODO proper filter
+    val fc = context.referenceFunctions(FqName("react.fc"))
+      .single { it.owner.valueParameters.size == 2 } // TODO proper filter
 
     val RBuilder = RBuilderClass(context, types)
     class RBuilderClass(context: IrPluginContext, types: KnownClassTypes) {
-      private val irFunctionalComponentClassifier = types.react.FunctionalComponent().classifier
+      private val irFcClassifier = types.react.FC().classifier
       private val irRBuilderClassifier = types.react.RBuilder.classifier
 
       val child = context.referenceFunctions(FqName("react.child")).single {
@@ -25,7 +26,7 @@ internal class KnownFunctionSymbols(context: IrPluginContext, types: KnownClassT
         val firstParameter = it.owner.valueParameters[0].type.classifierOrNull ?: return@single false
 
         FqNameEqualityChecker.areEqual(extensionReceiver, irRBuilderClassifier) &&
-          FqNameEqualityChecker.areEqual(firstParameter, irFunctionalComponentClassifier)
+          FqNameEqualityChecker.areEqual(firstParameter, irFcClassifier)
       }
     }
 
