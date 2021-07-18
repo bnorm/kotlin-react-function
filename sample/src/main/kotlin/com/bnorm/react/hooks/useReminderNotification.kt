@@ -3,7 +3,7 @@ package com.bnorm.react.hooks
 import com.bnorm.react.useItems
 import kotlinx.browser.window
 import kotlinx.datetime.*
-import react.useEffectWithCleanup
+import react.useEffect
 
 fun getTimeCondition(date: LocalDate): Boolean {
   var condition = false
@@ -30,7 +30,7 @@ fun getTimeCondition(date: LocalDate): Boolean {
 fun useReminderNotification() {
   val (pending, paused) = useItems()
 
-  useEffectWithCleanup(listOf(pending.size, paused.size)) {
+  useEffect(pending.size, paused.size) {
     val internal = window.setInterval({
       val now = Clock.System.todayAt(TimeZone.currentSystemDefault())
 
@@ -47,6 +47,6 @@ fun useReminderNotification() {
          */
       }
     }, 1000)
-    return@useEffectWithCleanup { window.clearInterval(internal)}
+    cleanup { window.clearInterval(internal) }
   }
 }

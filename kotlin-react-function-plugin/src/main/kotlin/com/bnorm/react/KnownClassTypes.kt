@@ -13,8 +13,8 @@ internal class KnownClassTypes(context: IrPluginContext, classes: KnownClassSymb
   val react: ReactPackage = ReactPackage(context, classes)
   class ReactPackage(context: IrPluginContext, private val classes: KnownClassSymbols) {
     val RProps = classes.react.RProps.createType(false, emptyList())
-    fun FunctionalComponent(type: IrType = RProps): IrSimpleType {
-      val typeAlias = classes.react.FunctionalComponent.owner.expandedType as IrSimpleType
+    fun FC(type: IrType = RProps): IrSimpleType {
+      val typeAlias = classes.react.FC.owner.expandedType as IrSimpleType
       return typeAlias.buildSimpleType {
         arguments = listOf(type as IrTypeArgument)
       }
@@ -22,7 +22,8 @@ internal class KnownClassTypes(context: IrPluginContext, classes: KnownClassSymb
 
     val ReactElement = classes.react.ReactElement.createType(false, emptyList())
     val RBuilder = classes.react.RBuilder.createType(false, emptyList())
-    fun RElementBuilder(type: IrType = RProps) = classes.react.RElementBuilder.createType(false, listOf(type as IrTypeArgument))
+    fun RElementBuilder(type: IrType = RProps): IrSimpleType =
+      classes.react.RElementBuilder.createType(false, listOf(type as IrTypeArgument))
   }
 
   val com_bnorm_react: BnormReactPackage = BnormReactPackage(context, classes)
