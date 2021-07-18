@@ -29,15 +29,20 @@ dependencies {
 
   jsCompileTest(kotlin("stdlib-js"))
   jsCompileTest(project(":kotlin-react-function"))
-  jsCompileTest("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.206-kotlin-1.5.10")
+  jsCompileTest("org.jetbrains.kotlin-wrappers:kotlin-react-dom:17.0.2-pre.218-kotlin-1.5.21")
 }
 
 // Download and relocate the Kotlin/JS dependencies for use by unit tests
-val jsCompileTestDownload by tasks.registering(Copy::class) {
+val jsCompileTestDownload by tasks.registering(Sync::class) {
   from(jsCompileTest)
   into("$buildDir/jsJars")
 }
-tasks.test.configure { dependsOn(jsCompileTestDownload) }
+tasks.test.configure {
+  dependsOn(jsCompileTestDownload)
+  testLogging {
+    exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+  }
+}
 
 tasks.withType<KotlinCompile> {
   kotlinOptions.jvmTarget = "1.8"

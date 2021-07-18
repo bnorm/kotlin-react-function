@@ -47,6 +47,6 @@ fun useReminderNotification() {
          */
       }
     }, 1000)
-    cleanup { window.clearInterval(internal)}
+    cleanup { window.clearInterval(internal) }
   }
 }
