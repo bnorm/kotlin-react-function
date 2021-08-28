@@ -1,6 +1,6 @@
 plugins {
-  kotlin("js") version "1.5.21"
-  kotlin("plugin.serialization") version "1.5.21"
+  kotlin("js") version "1.5.30"
+  kotlin("plugin.serialization") version "1.5.30"
   id("com.bnorm.react.kotlin-react-function") version "0.5.1"
 }
 
@@ -21,7 +21,7 @@ dependencies {
 
   implementation("com.bnorm.react:kotlin-react-function:0.5.1")
 
-  implementation(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.218-kotlin-1.5.21"))
+  implementation(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.238-kotlin-1.5.30"))
   implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
   implementation("org.jetbrains.kotlin-wrappers:kotlin-styled")
 

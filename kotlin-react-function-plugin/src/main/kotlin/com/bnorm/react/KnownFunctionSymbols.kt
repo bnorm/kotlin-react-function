@@ -15,18 +15,17 @@ internal class KnownFunctionSymbols(context: IrPluginContext, types: KnownClassT
 
     val RBuilder = RBuilderClass(context, types)
     class RBuilderClass(context: IrPluginContext, types: KnownClassTypes) {
-      private val irFcClassifier = types.react.FC().classifier
-      private val irRBuilderClassifier = types.react.RBuilder.classifier
-
-      val child = context.referenceFunctions(FqName("react.child")).single {
-        // TODO proper filter
-        if (it.owner.valueParameters.size != 3) return@single false
-        val extensionReceiverParameter = it.owner.extensionReceiverParameter ?: return@single false
-        val extensionReceiver = extensionReceiverParameter.type.classifierOrNull ?: return@single false
-        val firstParameter = it.owner.valueParameters[0].type.classifierOrNull ?: return@single false
-
-        FqNameEqualityChecker.areEqual(extensionReceiver, irRBuilderClassifier) &&
-          FqNameEqualityChecker.areEqual(firstParameter, irFcClassifier)
+      val invoke = run {
+        val irElementTypeClassifier = types.react.ElementType.classifier
+        val possible = context.referenceFunctions(FqName("react.RBuilder.invoke"))
+        possible.asSequence()
+          .filter { it.isBound }
+          .filter { it.owner.valueParameters.size == 1 }
+          .single {
+            val extensionReceiverParameter = it.owner.extensionReceiverParameter
+            val extensionReceiver = extensionReceiverParameter?.type?.classifierOrNull
+            extensionReceiver != null && FqNameEqualityChecker.areEqual(extensionReceiver, irElementTypeClassifier)
+          }
       }
     }
 

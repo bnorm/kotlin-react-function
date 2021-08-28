@@ -9,8 +9,8 @@ internal class KnownClassSymbols(context: IrPluginContext) {
   val react: ReactPackage = ReactPackage(context)
   class ReactPackage(context: IrPluginContext) {
     val FC = context.referenceTypeAlias(FqName("react.FC"))!!
-    val RProps = context.referenceClass(FqName("react.RProps"))!!
-    val ReactElement = context.referenceClass(FqName("react.ReactElement"))!!
+    val Props = context.referenceClass(FqName("react.Props"))!!
+    val ElementType = context.referenceClass(FqName("react.ElementType"))!!
     val RBuilder = context.referenceClass(FqName("react.RBuilder"))!!
     val RElementBuilder = context.referenceClass(FqName("react.RElementBuilder"))!!
   }

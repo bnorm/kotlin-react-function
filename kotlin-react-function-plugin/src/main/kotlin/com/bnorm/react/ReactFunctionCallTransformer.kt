@@ -16,7 +16,6 @@
 
 package com.bnorm.react
 
-import java.io.File
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -63,6 +62,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.Name
+import java.io.File
 
 fun FileLoweringPass.runOnFileInOrder(irFile: IrFile) {
   irFile.acceptVoid(object : IrElementVisitorVoid {
@@ -173,7 +173,7 @@ class ReactFunctionCallTransformer(
     val irClass = buildExternalInterface(
       name = "${declaration.name}FuncProps",
       visibility = DescriptorVisibilities.PRIVATE,
-      superTypes = listOf(classes.react.RProps),
+      superTypes = listOf(classes.react.Props),
       typeParameters = declaration.typeParameters
     )
     for (valueParameter in declaration.valueParameters) {
@@ -244,7 +244,7 @@ class ReactFunctionCallTransformer(
         context.irBuiltIns.unitType as IrTypeArgument
       ))
 
-    return irCall(functions.react.fc, classes.react.ReactElement).apply {
+    return irCall(functions.react.fc, classes.react.FC(propsType)).apply {
       putTypeArgument(0, propsType)
       putValueArgument(0, irString(name))
       putValueArgument(1, buildLambda(context.irBuiltIns.unitType, lambdaType) {
@@ -260,7 +260,7 @@ class ReactFunctionCallTransformer(
   private fun buildNewBody(propsClass: IrClass, propsType: IrType, componentProperty: IrProperty, declaration: IrSimpleFunction): IrBody {
     return context.irBuilder(declaration.symbol).run {
       irBlockBody {
-        +irCall_child(
+        +irCall_invoke(
           propsType,
           irGet(declaration.extensionReceiverParameter!!),
           irCall(componentProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY)
@@ -297,7 +297,7 @@ class ReactFunctionCallTransformer(
   }
 
   // TODO better name?
-  private fun IrBuilderWithScope.irCall_child(propsType: IrType, rBuilder: IrExpression, component: IrExpression, body: IrBlockBodyBuilder.(IrSimpleFunction) -> Unit): IrCall {
+  private fun IrBuilderWithScope.irCall_invoke(propsType: IrType, rBuilder: IrExpression, component: IrExpression, body: IrBlockBodyBuilder.(IrSimpleFunction) -> Unit): IrCall {
     // TODO type=@[ExtensionFunctionType]?
     val typeRElementBuilder = classes.react.RElementBuilder(propsType)
     val lambdaType = context.irBuiltIns.function(1)
@@ -306,11 +306,11 @@ class ReactFunctionCallTransformer(
         context.irBuiltIns.unitType as IrTypeArgument
       ))
 
-    return irCall(functions.react.RBuilder.child, classes.react.ReactElement).apply {
+    return irCall(functions.react.RBuilder.invoke, context.irBuiltIns.unitType).apply {
       putTypeArgument(0, propsType)
-      this.extensionReceiver = rBuilder
-      putValueArgument(0, component)
-      putValueArgument(2, buildLambda(context.irBuiltIns.unitType, lambdaType) {
+      this.dispatchReceiver = rBuilder
+      this.extensionReceiver = component
+      putValueArgument(0, buildLambda(context.irBuiltIns.unitType, lambdaType) {
         val function = this
         addExtensionReceiver(type = typeRElementBuilder)
         this.body = context.irBuilder(symbol).irBlockBody { body(function) }
