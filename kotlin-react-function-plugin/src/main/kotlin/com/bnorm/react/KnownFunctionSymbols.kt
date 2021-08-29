@@ -3,11 +3,17 @@
 package com.bnorm.react
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.symbols.FqNameEqualityChecker
 import org.jetbrains.kotlin.ir.types.classifierOrNull
+import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.FqName
 
-internal class KnownFunctionSymbols(context: IrPluginContext, types: KnownClassTypes = KnownClassTypes(context)) {
+internal class KnownFunctionSymbols(
+  context: IrPluginContext,
+  types: KnownClassTypes = KnownClassTypes(context)
+) {
   val react: ReactPackage = ReactPackage(context, types)
   class ReactPackage(context: IrPluginContext, types: KnownClassTypes) {
     val fc = context.referenceFunctions(FqName("react.fc"))
@@ -15,24 +21,25 @@ internal class KnownFunctionSymbols(context: IrPluginContext, types: KnownClassT
 
     val RBuilder = RBuilderClass(context, types)
     class RBuilderClass(context: IrPluginContext, types: KnownClassTypes) {
-      val invoke = run {
+      private val functions = types.classes.react.RBuilder.functions.filter { it.isBound }
+      val child = run {
         val irElementTypeClassifier = types.react.ElementType.classifier
-        val possible = context.referenceFunctions(FqName("react.RBuilder.invoke"))
-        possible.asSequence()
-          .filter { it.isBound }
-          .filter { it.owner.valueParameters.size == 1 }
+        functions
+          .filter { it.owner.name.asString() == "child" }
+          .filter { it.owner.visibility == DescriptorVisibilities.PUBLIC }
+          .filter { it.owner.valueParameters.size == 3 }
           .single {
-            val extensionReceiverParameter = it.owner.extensionReceiverParameter
-            val extensionReceiver = extensionReceiverParameter?.type?.classifierOrNull
-            extensionReceiver != null && FqNameEqualityChecker.areEqual(extensionReceiver, irElementTypeClassifier)
+            val firstParameter = it.owner.valueParameters[0].type.classifierOrNull ?: return@single false
+            FqNameEqualityChecker.areEqual(firstParameter, irElementTypeClassifier)
           }
       }
     }
 
     val RElementBuilder = RElementBuilderClass(context, types)
     class RElementBuilderClass(context: IrPluginContext, types: KnownClassTypes) {
-      val attrs = context.referenceProperties(FqName("react.RElementBuilder.attrs")).single() // TODO proper filter
-      val key = context.referenceProperties(FqName("react.RElementBuilder.key")).single() // TODO proper filter
+      private val properties = types.classes.react.RElementBuilder.owner.properties
+      val attrs = properties.filter { it.name.asString() == "attrs" }.single().symbol
+      val key = properties.filter { it.name.asString() == "key" }.single().symbol
     }
   }
 

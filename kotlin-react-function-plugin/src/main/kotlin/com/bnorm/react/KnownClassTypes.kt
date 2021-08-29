@@ -9,7 +9,10 @@ import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
 import org.jetbrains.kotlin.ir.types.impl.buildSimpleType
 
-internal class KnownClassTypes(context: IrPluginContext, classes: KnownClassSymbols = KnownClassSymbols(context)) {
+internal class KnownClassTypes(
+  context: IrPluginContext,
+  val classes: KnownClassSymbols = KnownClassSymbols(context)
+) {
   val react: ReactPackage = ReactPackage(context, classes)
   class ReactPackage(context: IrPluginContext, private val classes: KnownClassSymbols) {
     val Props = classes.react.Props.createType(false, emptyList())

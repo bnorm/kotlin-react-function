@@ -260,7 +260,7 @@ class ReactFunctionCallTransformer(
   private fun buildNewBody(propsClass: IrClass, propsType: IrType, componentProperty: IrProperty, declaration: IrSimpleFunction): IrBody {
     return context.irBuilder(declaration.symbol).run {
       irBlockBody {
-        +irCall_invoke(
+        +irCall_child(
           propsType,
           irGet(declaration.extensionReceiverParameter!!),
           irCall(componentProperty.getter!!, origin = IrStatementOrigin.GET_PROPERTY)
@@ -297,7 +297,7 @@ class ReactFunctionCallTransformer(
   }
 
   // TODO better name?
-  private fun IrBuilderWithScope.irCall_invoke(propsType: IrType, rBuilder: IrExpression, component: IrExpression, body: IrBlockBodyBuilder.(IrSimpleFunction) -> Unit): IrCall {
+  private fun IrBuilderWithScope.irCall_child(propsType: IrType, rBuilder: IrExpression, component: IrExpression, body: IrBlockBodyBuilder.(IrSimpleFunction) -> Unit): IrCall {
     // TODO type=@[ExtensionFunctionType]?
     val typeRElementBuilder = classes.react.RElementBuilder(propsType)
     val lambdaType = context.irBuiltIns.function(1)
@@ -306,11 +306,11 @@ class ReactFunctionCallTransformer(
         context.irBuiltIns.unitType as IrTypeArgument
       ))
 
-    return irCall(functions.react.RBuilder.invoke, context.irBuiltIns.unitType).apply {
+    return irCall(functions.react.RBuilder.child, context.irBuiltIns.unitType).apply {
       putTypeArgument(0, propsType)
       this.dispatchReceiver = rBuilder
-      this.extensionReceiver = component
-      putValueArgument(0, buildLambda(context.irBuiltIns.unitType, lambdaType) {
+      putValueArgument(0, component)
+      putValueArgument(2, buildLambda(context.irBuiltIns.unitType, lambdaType) {
         val function = this
         addExtensionReceiver(type = typeRElementBuilder)
         this.body = context.irBuilder(symbol).irBlockBody { body(function) }
