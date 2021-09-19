@@ -17,19 +17,20 @@ internal class KnownFunctionSymbols(
   val react: ReactPackage = ReactPackage(context, types)
   class ReactPackage(context: IrPluginContext, types: KnownClassTypes) {
     val fc = context.referenceFunctions(FqName("react.fc"))
-      .single { it.owner.valueParameters.size == 2 } // TODO proper filter
+      .single { it.owner.valueParameters.size == 2 } // TODO match all parameters
 
     val RBuilder = RBuilderClass(context, types)
     class RBuilderClass(context: IrPluginContext, types: KnownClassTypes) {
       private val functions = types.classes.react.RBuilder.functions.filter { it.isBound }
       val child = run {
         val irElementTypeClassifier = types.react.ElementType.classifier
-        functions
+        functions.asSequence()
           .filter { it.owner.name.asString() == "child" }
           .filter { it.owner.visibility == DescriptorVisibilities.PUBLIC }
           .filter { it.owner.valueParameters.size == 3 }
           .single {
             val firstParameter = it.owner.valueParameters[0].type.classifierOrNull ?: return@single false
+            // TODO match all parameters
             FqNameEqualityChecker.areEqual(firstParameter, irElementTypeClassifier)
           }
       }
@@ -45,6 +46,6 @@ internal class KnownFunctionSymbols(
 
   val kotlin: KotlinPackage = KotlinPackage(context, types)
   class KotlinPackage(context: IrPluginContext, types: KnownClassTypes) {
-    val toString = context.referenceFunctions(FqName("kotlin.toString")).single() // TODO proper filter
+    val toString = context.referenceFunctions(FqName("kotlin.toString")).single()
   }
 }

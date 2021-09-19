@@ -29,7 +29,7 @@ dependencies {
 
   jsCompileTest(kotlin("stdlib-js"))
   jsCompileTest(project(":kotlin-react-function"))
-  jsCompileTest(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.238-kotlin-1.5.30"))
+  jsCompileTest(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.246-kotlin-1.5.30"))
   jsCompileTest("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
 }
 
