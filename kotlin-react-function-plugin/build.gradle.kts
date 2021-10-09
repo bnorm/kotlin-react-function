@@ -25,11 +25,11 @@ dependencies {
 
   testImplementation(kotlin("test-junit"))
   testImplementation("org.jetbrains.kotlin:kotlin-compiler-embeddable")
-  testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.3.6")
+  testImplementation("com.github.tschuchortdev:kotlin-compile-testing:1.4.5")
 
   jsCompileTest(kotlin("stdlib-js"))
   jsCompileTest(project(":kotlin-react-function"))
-  jsCompileTest(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.246-kotlin-1.5.30"))
+  jsCompileTest(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.256-kotlin-1.5.31"))
   jsCompileTest("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
 }
 
