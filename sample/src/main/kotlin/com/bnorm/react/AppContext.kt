@@ -4,11 +4,11 @@ import kotlinx.datetime.*
 import react.*
 import react.dom.div
 
-private val AppContext = createContext<Pair<AppState, RDispatch<AppAction>>>()
+private val AppContext = createContext<ReducerInstance<AppState, AppAction>>()
 
-fun useAppState(): AppState = useContext(AppContext).first
+fun useAppState(): AppState = useContext(AppContext).component1()
 
-fun useAppReducer(): RDispatch<AppAction> = useContext(AppContext).second
+fun useAppReducer(): RDispatch<AppAction> = useContext(AppContext).component2()
 
 data class Items(val pending: List<TodoItem>, val paused: List<TodoItem>, val completed: List<TodoItem>)
 

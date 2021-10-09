@@ -3,14 +3,14 @@ package com.bnorm.react.hooks
 import com.bnorm.react.*
 import kotlinx.browser.window
 import kotlinx.datetime.*
-import react.useEffectWithCleanup
+import react.useEffect
 
 fun useDateCheck() {
   val date = useAppState().date
   val dispatch = useAppReducer()
 
-  useEffectWithCleanup(listOf(date, dispatch)) {
-    val interval  = window.setInterval({
+  useEffect(date, dispatch) {
+    val interval = window.setInterval({
       val now = Clock.System.todayAt(TimeZone.currentSystemDefault())
       if (now > date) {
 
@@ -26,6 +26,6 @@ fun useDateCheck() {
         window.location.reload()
       }
     }, 1000)
-    return@useEffectWithCleanup { window.clearInterval(interval) }
+    cleanup { window.clearInterval(interval) }
   }
 }

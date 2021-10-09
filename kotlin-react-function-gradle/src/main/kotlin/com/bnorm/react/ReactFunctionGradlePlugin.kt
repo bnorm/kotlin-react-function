@@ -39,6 +39,9 @@ class ReactFunctionGradlePlugin : KotlinCompilerPluginSupportPlugin {
   )
 
   override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {
+    kotlinCompilation.dependencies {
+      implementation("com.bnorm.react:kotlin-react-function:${BuildConfig.PROJECT_VERSION}")
+    }
     val project = kotlinCompilation.target.project
     return project.provider { emptyList() }
   }
