@@ -1,11 +1,12 @@
 Change Log
 ==========
 
-## [v0.5.1] - 2021-10-09
+## [v0.6.0] - 2021-10-09
 
 **New**
 * Support Kotlin 1.5.30
 * Support latest version of kotlin-wrappers (pre.256)
+* Include support library automatically with Gradle plugin
 
 ## [v0.5.1] - 2021-06-04
 

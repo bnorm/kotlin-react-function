@@ -8,7 +8,7 @@ plugins {
 
 allprojects {
   group = "com.bnorm.react"
-  version = "0.6.0"
+  version = "0.7.0-SNAPSHOT"
 }
 
 subprojects {
