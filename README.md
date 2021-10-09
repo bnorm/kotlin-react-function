@@ -21,11 +21,11 @@ it is not currently a React functional component. To do so requires a fair
 amount of boilerplate:
 
 ```kotlin
-private external interface HelloProps : RProps {
+private external interface HelloProps : Props {
   var name: String
 }
 
-private val HELLO_COMPONENT = functionalComponent<HelloProps>("Hello") { props ->
+private val HELLO_COMPONENT = fc<HelloProps>("Hello") { props ->
   +"Hello, ${props.name}"
 }
 
@@ -47,9 +47,9 @@ fun RBuilder.Hello(name: String) {
 }
 ```
 
-The compiler plugin automatically generates the RProps interface and the
+The compiler plugin automatically generates the `Props` interface and the
 functional component property. It then rewrites the original function to add the
-component as a child and automatically assign all the component property
+component as a child and automatically assigns all the component property
 attributes. Basically doing all the boilerplate for you automatically! Magic!
 
 ## Work In Progress
@@ -66,6 +66,7 @@ production. Use at your own risk!
 | 1.4.30         | 0.4.0          |
 | 1.5.0          | 0.5.0          |
 | 1.5.10         | 0.5.1          |
+| 1.5.30         | 0.6.0          |
 
 See the [sample][sample] directory for a working project using this compiler
 plugin which is also
@@ -78,15 +79,15 @@ Builds of the Gradle plugin are available through the
 
 ```kotlin
 plugins {
-  kotlin("jvm") version "1.5.10"
-  id("com.bnorm.react.kotlin-react-function") version "0.5.1"
+  kotlin("jvm") version "1.5.30"
+  id("com.bnorm.react.kotlin-react-function") version "0.6.0"
 }
 ```
 
 Annotations are available via Maven Central:
 
 ```kotlin
-implementation("com.bnorm.react:kotlin-react-function:0.5.1")
+implementation("com.bnorm.react:kotlin-react-function:0.6.0")
 ```
 
 Make sure Kotlin/JS is configured to compile using IR!
@@ -127,6 +128,21 @@ fun RBuilder.Component(... other parameters ..., @RKey key: String) {
 If the `@RKey` annotated parameter is `null`, then the string `"null"` will be
 set as the component key. It is also possible to use default parameters to
 derive the key from another parameter.
+
+### Generics
+
+The `@RFunction` annotation supports functions with generics.
+
+```kotlin
+@RFunction
+fun <T> RBuilder.GenericList(items: List<T>, onItem: RBuilder.(T) -> Unit) {
+  div {
+    for (item in items) {
+      onItem(item)
+    }
+  }
+}
+```
 
 [sample]: https://github.com/bnorm/kotlin-react-function/blob/main/sample
 [kotlin-react-function-gradle]: https://plugins.gradle.org/plugin/com.bnorm.react.kotlin-react-function

@@ -1,7 +1,7 @@
 plugins {
   kotlin("js") version "1.5.31"
   kotlin("plugin.serialization") version "1.5.31"
-  id("com.bnorm.react.kotlin-react-function") version "0.5.1"
+  id("com.bnorm.react.kotlin-react-function") version "0.6.0"
 }
 
 repositories {

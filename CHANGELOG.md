@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+## [v0.5.1] - 2021-10-09
+
+**New**
+* Support Kotlin 1.5.30
+* Support latest version of kotlin-wrappers (pre.256)
+
 ## [v0.5.1] - 2021-06-04
 
 **Fixes**
@@ -36,6 +42,7 @@ Change Log
 
 Initial release.
 
+[v0.6.0]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.6.0
 [v0.5.1]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.5.1
 [v0.5.0]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.5.0
 [v0.4.0]: https://github.com/bnorm/kotlin-react-function/releases/tag/v0.4.0
