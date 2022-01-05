@@ -8,7 +8,7 @@ private val AppContext = createContext<ReducerInstance<AppState, AppAction>>()
 
 fun useAppState(): AppState = useContext(AppContext).component1()
 
-fun useAppReducer(): RDispatch<AppAction> = useContext(AppContext).component2()
+fun useAppReducer(): Dispatch<AppAction> = useContext(AppContext).component2()
 
 data class Items(val pending: List<TodoItem>, val paused: List<TodoItem>, val completed: List<TodoItem>)
 
@@ -37,7 +37,7 @@ sealed class AppAction {
   object ResetAll : AppAction()
 }
 
-val appStateReducer: RReducer<AppState, AppAction> = { state, action ->
+val appStateReducer: Reducer<AppState, AppAction> = { state, action ->
   when (action) {
     is AppAction.AddItem -> {
       val newItems = state.items + action.item

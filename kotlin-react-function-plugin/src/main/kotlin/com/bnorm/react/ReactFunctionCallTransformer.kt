@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
+import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.remapTypes
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -237,12 +238,12 @@ class ReactFunctionCallTransformer(
   // TODO better name?
   private fun IrBuilderWithScope.irCall_functionalComponent(propsType: IrType, name: String, body: IrBlockBodyBuilder.(IrSimpleFunction) -> Unit): IrCall {
     // TODO type=@[ExtensionFunctionType]?
-    val lambdaType = context.irBuiltIns.function(2)
-      .createType(false, listOf(
-        classes.react.RBuilder as IrTypeArgument,
-        propsType as IrTypeArgument,
-        context.irBuiltIns.unitType as IrTypeArgument
-      ))
+    val lambdaType = context.irBuiltIns.functionN(2)
+      .typeWith(
+        classes.react.RBuilder,
+        propsType,
+        context.irBuiltIns.unitType,
+      )
 
     return irCall(functions.react.fc, classes.react.FC(propsType)).apply {
       putTypeArgument(0, propsType)
@@ -300,11 +301,11 @@ class ReactFunctionCallTransformer(
   private fun IrBuilderWithScope.irCall_child(propsType: IrType, rBuilder: IrExpression, component: IrExpression, body: IrBlockBodyBuilder.(IrSimpleFunction) -> Unit): IrCall {
     // TODO type=@[ExtensionFunctionType]?
     val typeRElementBuilder = classes.react.RElementBuilder(propsType)
-    val lambdaType = context.irBuiltIns.function(1)
-      .createType(false, listOf(
-        typeRElementBuilder as IrTypeArgument,
-        context.irBuiltIns.unitType as IrTypeArgument
-      ))
+    val lambdaType = context.irBuiltIns.functionN(1)
+      .typeWith(
+        typeRElementBuilder,
+        context.irBuiltIns.unitType
+      )
 
     return irCall(functions.react.RBuilder.child, context.irBuiltIns.unitType).apply {
       putTypeArgument(0, propsType)
