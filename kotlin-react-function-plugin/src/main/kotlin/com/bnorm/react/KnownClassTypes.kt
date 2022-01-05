@@ -16,13 +16,7 @@ internal class KnownClassTypes(
   val react: ReactPackage = ReactPackage(context, classes)
   class ReactPackage(context: IrPluginContext, private val classes: KnownClassSymbols) {
     val Props = classes.react.Props.createType(false, emptyList())
-    fun FC(type: IrType = Props): IrSimpleType {
-      val typeAlias = classes.react.FC.owner.expandedType as IrSimpleType
-      return typeAlias.buildSimpleType {
-        arguments = listOf(type as IrTypeArgument)
-      }
-    }
-
+    val FC = classes.react.FC.createType(false, emptyList())
     val ElementType = classes.react.ElementType.createType(false, emptyList())
     val RBuilder = classes.react.RBuilder.createType(false, emptyList())
     fun RElementBuilder(type: IrType = Props): IrSimpleType =
