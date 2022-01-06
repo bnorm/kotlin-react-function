@@ -20,7 +20,7 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
 
   implementation(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.286-kotlin-1.6.10"))
-  implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
+  implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom-legacy")
   implementation("org.jetbrains.kotlin-wrappers:kotlin-styled")
 
   implementation(npm("@reach/accordion", "^0.13.0"))
