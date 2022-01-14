@@ -62,6 +62,7 @@ at your own risk!
 | 1.5.0          | 0.5.0          |
 | 1.5.10         | 0.5.1          |
 | 1.5.30         | 0.6.0          |
+| 1.6.10         | 0.7.0          |
 
 See the [sample][sample] directory for a working project using this compiler plugin which is also
 [available live](https://bnorm.github.io/kotlin-react-function/).
@@ -72,8 +73,8 @@ Builds of the Gradle plugin are available through the [Gradle Plugin Portal][kot
 
 ```kotlin
 plugins {
-    kotlin("jvm") version "1.5.30"
-    id("com.bnorm.react.kotlin-react-function") version "0.6.0"
+    kotlin("jvm") version "1.6.10"
+    id("com.bnorm.react.kotlin-react-function") version "0.7.0"
 }
 ```
 
@@ -81,7 +82,7 @@ Annotations are automatically included, but if they are needed separately, the d
 Central:
 
 ```kotlin
-implementation("com.bnorm.react:kotlin-react-function:0.6.0")
+implementation("com.bnorm.react:kotlin-react-function:0.7.0")
 ```
 
 Make sure Kotlin/JS is configured to compile using IR!

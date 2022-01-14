@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+## [v0.7.0] - 2022-01-13
+
+**New**
+* Support Kotlin 1.6.10
+* Support latest version of kotlin-wrappers (pre.286)
+
 ## [v0.6.0] - 2021-10-09
 
 **New**
