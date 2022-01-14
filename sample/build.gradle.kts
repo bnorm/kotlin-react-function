@@ -1,6 +1,6 @@
 plugins {
-  kotlin("js") version "1.5.31"
-  kotlin("plugin.serialization") version "1.5.31"
+  kotlin("js") version "1.6.10"
+  kotlin("plugin.serialization") version "1.6.10"
   id("com.bnorm.react.kotlin-react-function") version "0.6.0"
 }
 
@@ -19,8 +19,8 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
   implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
 
-  implementation(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.256-kotlin-1.5.31"))
-  implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom")
+  implementation(enforcedPlatform("org.jetbrains.kotlin-wrappers:kotlin-wrappers-bom:0.0.1-pre.286-kotlin-1.6.10"))
+  implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom-legacy")
   implementation("org.jetbrains.kotlin-wrappers:kotlin-styled")
 
   implementation(npm("@reach/accordion", "^0.13.0"))

@@ -9,5 +9,5 @@ import com.bnorm.react.IndexStyles as styles
 
 fun main() {
   injectGlobal(styles.global)
-  render(document.getElementById("root")) { App() }
+  render(document.getElementById("root")!!) { App() }
 }

@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.createType
-import org.jetbrains.kotlin.ir.types.impl.buildSimpleType
 
 internal class KnownClassTypes(
   context: IrPluginContext,
@@ -16,12 +15,8 @@ internal class KnownClassTypes(
   val react: ReactPackage = ReactPackage(context, classes)
   class ReactPackage(context: IrPluginContext, private val classes: KnownClassSymbols) {
     val Props = classes.react.Props.createType(false, emptyList())
-    fun FC(type: IrType = Props): IrSimpleType {
-      val typeAlias = classes.react.FC.owner.expandedType as IrSimpleType
-      return typeAlias.buildSimpleType {
-        arguments = listOf(type as IrTypeArgument)
-      }
-    }
+    fun FC(type: IrType = Props): IrSimpleType =
+      classes.react.FC.createType(false, arguments = listOf(type as IrTypeArgument))
 
     val ElementType = classes.react.ElementType.createType(false, emptyList())
     val RBuilder = classes.react.RBuilder.createType(false, emptyList())

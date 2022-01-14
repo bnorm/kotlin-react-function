@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.name.FqName
 internal class KnownClassSymbols(context: IrPluginContext) {
   val react: ReactPackage = ReactPackage(context)
   class ReactPackage(context: IrPluginContext) {
-    val FC = context.referenceTypeAlias(FqName("react.FC"))!!
+    val FC = context.referenceClass(FqName("react.FC"))!!
     val Props = context.referenceClass(FqName("react.Props"))!!
     val ElementType = context.referenceClass(FqName("react.ElementType"))!!
     val RBuilder = context.referenceClass(FqName("react.RBuilder"))!!
