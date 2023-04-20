@@ -2,6 +2,12 @@
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.bnorm.react/kotlin-react-function/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.bnorm.react/kotlin-react-function)
 
+> **Warning**
+> This library has been archived and no future work is planned. [kotlin-wrappers](https://github.com/JetBrains/kotlin-wrappers)
+> has made it significantly easier to define functional components since this compiler plugin was created. Also,
+> [Compose for Web](https://www.jetbrains.com/lp/compose-multiplatform/) exists and provides a similar code style this
+> compiler plugin was attempting to achieve.
+
 Writing functional components with Kotlin/JS for React is great but requires a bit of boilerplate which makes each new
 component require some setup. Most of this boilerplate is extremely simple, perfect for automation.
 
